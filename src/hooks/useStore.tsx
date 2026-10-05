@@ -19,7 +19,7 @@ import {
   savePayments,
   saveSettings,
 } from '../db'
-import type { AppData, FeePlan, Member, Payment, PaymentMethod, Settings } from '../types'
+import { DEFAULT_SETTINGS, type AppData, type FeePlan, type Member, type Payment, type PaymentMethod, type Settings } from '../types'
 import {
   advanceDueDate,
   defaultAmount,
@@ -196,49 +196,63 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refresh = useCallback(async () => {
-    const [s, m, p] = await Promise.all([
-      loadSettings(),
-      loadMembers(),
-      loadPayments(),
-    ])
-    setSettings(s)
-    setMembers(m)
-    setPayments(p)
+    try {
+      const [s, m, p] = await Promise.all([
+        loadSettings(),
+        loadMembers(),
+        loadPayments(),
+      ])
+      setSettings(s)
+      setMembers(m)
+      setPayments(p)
+      // Always open the UI with local/IndexedDB data first — never block on network.
+      setReady(true)
 
-    // Pull shared cloud data so iPhone/Android see the same roster
-    if (isCloudSyncEnabled()) {
-      setSyncStatus('pulling')
-      const result = await pullCloudData()
-      if (result.ok && result.data) {
-        const merged = mergeRemoteWithLocalPassword(result.data, s.adminPassword)
-        const local: AppData = {
-          version: 1,
-          settings: s,
-          members: m,
-          payments: p,
-          exportedAt: undefined,
+      // Pull shared cloud data in the background so iPhone/Android see the same roster
+      if (isCloudSyncEnabled()) {
+        setSyncStatus('pulling')
+        try {
+          const result = await pullCloudData()
+          if (result.ok && result.data) {
+            const merged = mergeRemoteWithLocalPassword(
+              result.data,
+              s.adminPassword,
+            )
+            const local: AppData = {
+              version: 1,
+              settings: s,
+              members: m,
+              payments: p,
+              exportedAt: undefined,
+            }
+            const localEmpty = m.length === 0 && p.length === 0
+            if (localEmpty || shouldPreferRemote(local, merged)) {
+              await persistAll(merged)
+              setSettings(merged.settings)
+              setMembers(merged.members)
+              setPayments(merged.payments)
+            } else if (canPush() && (m.length > 0 || p.length > 0)) {
+              // Local has data cloud lacks — push so other devices catch up
+              void pushCloudData(snapshot(s, m, p)).then((r) => {
+                if (r.ok) setLastSyncedAt(new Date().toISOString())
+              })
+            }
+            setSyncStatus(canPush() ? 'ok' : 'readonly')
+            setLastSyncedAt(new Date().toISOString())
+          } else {
+            setSyncStatus(canPush() ? 'ok' : 'readonly')
+            if (result.error) setSyncError(result.error)
+          }
+        } catch (e) {
+          setSyncStatus(canPush() ? 'ok' : 'readonly')
+          setSyncError(e instanceof Error ? e.message : 'Cloud pull failed')
         }
-        const localEmpty = m.length === 0 && p.length === 0
-        if (localEmpty || shouldPreferRemote(local, merged)) {
-          await persistAll(merged)
-          setSettings(merged.settings)
-          setMembers(merged.members)
-          setPayments(merged.payments)
-        } else if (canPush() && (m.length > 0 || p.length > 0)) {
-          // Local has data cloud lacks — push so other devices catch up
-          void pushCloudData(snapshot(s, m, p)).then((r) => {
-            if (r.ok) setLastSyncedAt(new Date().toISOString())
-          })
-        }
-        setSyncStatus(canPush() ? 'ok' : 'readonly')
-        setLastSyncedAt(new Date().toISOString())
-      } else {
-        setSyncStatus(canPush() ? 'ok' : 'readonly')
-        if (result.error) setSyncError(result.error)
       }
+    } catch (e) {
+      console.error('Store boot failed', e)
+      setSettings((prev) => prev ?? { ...DEFAULT_SETTINGS })
+      setReady(true)
     }
-
-    setReady(true)
   }, [persistAll])
 
   useEffect(() => {

@@ -75,8 +75,29 @@ function parseAppData(json: unknown): AppData | null {
   }
 }
 
+const FETCH_TIMEOUT_MS = 8000
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs = FETCH_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error(`Timed out after ${timeoutMs}ms`)
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function fetchJson(url: string): Promise<unknown> {
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: 'GET',
     cache: 'no-store',
     headers: { Accept: 'application/json' },
@@ -145,7 +166,7 @@ export async function pushCloudData(data: AppData): Promise<SyncResult> {
   }
 
   try {
-    const res = await fetch(gistApiUrl(), {
+    const res = await fetchWithTimeout(gistApiUrl(), {
       method: 'PATCH',
       headers: {
         Accept: 'application/vnd.github+json',
@@ -154,7 +175,7 @@ export async function pushCloudData(data: AppData): Promise<SyncResult> {
         'X-GitHub-Api-Version': '2022-11-28',
       },
       body: JSON.stringify(body),
-    })
+    }, 15000)
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       let msg = `GitHub ${res.status}`
