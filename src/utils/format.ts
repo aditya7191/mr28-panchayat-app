@@ -160,7 +160,7 @@ export function buildWhatsAppReminder(
     settings.upiId ? `UPI: ${settings.upiId}` : '',
     ``,
     `કૃપા કરીને ફાળો ભરી આપો. / Please pay at your earliest.`,
-    `જય ભીમ.`,
+    `જય રોહિદાસ બાપુ.`,
   ]
   return lines.filter((l) => l !== undefined).join('\n')
 }
@@ -183,6 +183,20 @@ export function buildReceiptShareText(
     `પદ્ધતિ / Method: ${payment.method}`,
     `સમયગાળો / Period: ${formatDate(payment.periodFrom)} – ${formatDate(payment.periodTo)}`,
     ``,
-    `આભાર! જય ભીમ.`,
+    `આભાર! જય રોહિદાસ બાપુ.`,
+  ].join('\n')
+}
+
+/** Short caption for image share / WhatsApp fallback. */
+export function buildReceiptShareCaption(
+  payment: Payment,
+  member: Member,
+): string {
+  return [
+    `રસીદ / Receipt: ${payment.receiptNo}`,
+    `સભ્ય / Member: ${member.name}`,
+    `રકમ / Amount: ₹${payment.amount}`,
+    ``,
+    `જય રોહિદાસ બાપુ / Jay Rohidas Baapu`,
   ].join('\n')
 }

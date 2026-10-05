@@ -74,7 +74,7 @@ const strings = {
   print: { gu: 'પ્રિન્ટ', en: 'Print' },
   share: { gu: 'શેર', en: 'Share' },
   copyText: { gu: 'ટેક્સ્ટ કૉપી', en: 'Copy Text' },
-  thankYou: { gu: 'આભાર! જય ભીમ.', en: 'Thank you! Jai Bhim.' },
+  thankYou: { gu: 'આભાર! જય રોહિદાસ બાપુ.', en: 'Thank you! Jay Rohidas Baapu.' },
   back: { gu: 'પાછા', en: 'Back' },
 
   // Reminders
@@ -135,8 +135,8 @@ const strings = {
     en: 'Auto-open WhatsApp after payment',
   },
   autoWhatsAppAfterPaymentHint: {
-    gu: 'રસીદ સાચવ્યા પછી સભ્યના ફોન પર ડિજિટલ રસીદ (ગુ+EN) ખુલશે.',
-    en: 'After saving a payment, opens digital receipt (Gu+EN) to the member’s phone.',
+    gu: 'રસીદ સાચવ્યા પછી રસીદનો ફોટો Web Share / WhatsApp થી મોકલવાનો પ્રયાસ.',
+    en: 'After saving a payment, tries to share a receipt photo via Web Share / WhatsApp.',
   },
   whatsAppBatchDelay: {
     gu: 'બેચ મોકલવામાં વિલંબ (સેકન્ડ)',
@@ -147,6 +147,52 @@ const strings = {
     en: 'Delay between each open when using Reminders “Send all”.',
   },
   openWhatsAppReceipt: { gu: 'WhatsApp રસીદ', en: 'WhatsApp receipt' },
+
+
+  // Auth / Gate
+  gateTitle: { gu: 'MR28 પંચાયત', en: 'MR28 Panchayat' },
+  gateWelcome: {
+    gu: 'સ્વાગત છે',
+    en: 'Welcome',
+  },
+  publicView: { gu: 'સાર્વજનિક જોવા', en: 'Public view' },
+  publicViewHint: {
+    gu: 'સંસ્થા માહિતી અને ફાળો દર જુઓ (સભ્ય ડેટા વગર).',
+    en: 'View organisation info and fee rates (no member data).',
+  },
+  adminLogin: { gu: 'એડમિન લૉગિન', en: 'Admin login' },
+  adminLoginHint: {
+    gu: 'સભ્યો, ચુકવણી, રસીદ અને સેટિંગ્સ મેનેજ કરો.',
+    en: 'Manage members, payments, receipts and settings.',
+  },
+  adminPassword: { gu: 'પાસવર્ડ', en: 'Password' },
+  login: { gu: 'લૉગિન', en: 'Login' },
+  logout: { gu: 'લૉગઆઉટ', en: 'Logout' },
+  wrongPassword: { gu: 'ખોટો પાસવર્ડ', en: 'Wrong password' },
+  changeAdminPassword: { gu: 'એડમિન પાસવર્ડ બદલો', en: 'Change admin password' },
+  adminPasswordHint: {
+    gu: 'ડિફૉલ્ટ: aditya@1989 — સેટિંગ્સમાં બદલી શકાય.',
+    en: 'Default: aditya@1989 — changeable in Settings.',
+  },
+  backToGate: { gu: 'મુખ્ય પૃષ્ઠ', en: 'Home' },
+  publicFees: { gu: 'ફાળો દર', en: 'Fee rates' },
+  publicContact: { gu: 'સંપર્ક / ચુકવણી', en: 'Contact / Payment' },
+  publicNoUpi: {
+    gu: 'UPI હજુ સેટ નથી — કોષાધિકારીને સંપર્ક કરો.',
+    en: 'UPI not set yet — contact the treasurer.',
+  },
+  adminMode: { gu: 'એડમિન', en: 'Admin' },
+  publicMode: { gu: 'સાર્વજનિક', en: 'Public' },
+
+  // Receipt image share
+  shareReceiptImage: { gu: 'રસીદ ફોટો શેર', en: 'Share receipt photo' },
+  saveReceiptImage: { gu: 'રસીદ ફોટો સાચવો', en: 'Save receipt photo' },
+  sharingReceipt: { gu: 'રસીદ તૈયાર થઈ રહી છે…', en: 'Preparing receipt…' },
+  attachImageInstruct: {
+    gu: 'રસીદ ફોટો સાચવ્યો. WhatsAppમાં ફોટો જોડીને મોકલો.',
+    en: 'Receipt photo saved. Attach the photo in WhatsApp and send.',
+  },
+  openWhatsAppText: { gu: 'WhatsApp ટેક્સ્ટ', en: 'WhatsApp text' },
 
   // Common
   required: { gu: 'જરૂરી', en: 'Required' },

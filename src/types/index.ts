@@ -46,6 +46,8 @@ export interface Settings {
   autoWhatsAppAfterPayment: boolean
   /** Delay (ms) between sequential reminder WhatsApp opens. Default 2000. */
   whatsAppBatchDelayMs: number
+  /** Admin gate password (default aditya@1989). Stored in settings. */
+  adminPassword: string
 }
 
 export interface AppData {
@@ -71,4 +73,5 @@ export const DEFAULT_SETTINGS: Settings = {
   bankDetails: '',
   autoWhatsAppAfterPayment: true,
   whatsAppBatchDelayMs: 2000,
+  adminPassword: 'aditya@1989',
 }

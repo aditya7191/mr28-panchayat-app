@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
 import type { AppData, Lang, Settings as SettingsType } from '../types'
@@ -19,8 +21,11 @@ export function Settings() {
     members,
     payments,
   } = useStore()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const [form, setForm] = useState<SettingsType>({ ...settings })
   const [msg, setMsg] = useState('')
+  const [pwdConfirm, setPwdConfirm] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   function patch<K extends keyof SettingsType>(key: K, value: SettingsType[K]) {
@@ -28,8 +33,23 @@ export function Settings() {
   }
 
   async function handleSave() {
-    await updateSettings(form)
-    setLang(form.defaultLang)
+    const next = { ...form }
+    if (!next.adminPassword?.trim()) {
+      next.adminPassword = 'aditya@1989'
+    }
+    if (
+      next.adminPassword !== settings.adminPassword &&
+      pwdConfirm &&
+      pwdConfirm !== next.adminPassword
+    ) {
+      setMsg(t('wrongPassword'))
+      setTimeout(() => setMsg(''), 2500)
+      return
+    }
+    await updateSettings(next)
+    setForm(next)
+    setPwdConfirm('')
+    setLang(next.defaultLang)
     setMsg(t('settingsSaved'))
     setTimeout(() => setMsg(''), 2000)
   }
@@ -251,6 +271,45 @@ export function Settings() {
           can be added later with Meta credentials. / ફોન પર wa.me થી ખુલે છે;
           પૂર્ણ API પછીથી Meta સાથે ઉમેરી શકાય.
         </p>
+      </section>
+
+
+      <section className={section}>
+        <h3 className="mb-3 text-sm font-bold text-navy">{t('changeAdminPassword')}</h3>
+        <div className="flex flex-col gap-2.5">
+          <div>
+            <label className={label}>{t('adminPassword')}</label>
+            <input
+              className={field}
+              type="password"
+              autoComplete="new-password"
+              value={form.adminPassword ?? 'aditya@1989'}
+              onChange={(e) => patch('adminPassword', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={label}>{t('adminPassword')} (confirm)</label>
+            <input
+              className={field}
+              type="password"
+              autoComplete="new-password"
+              value={pwdConfirm}
+              onChange={(e) => setPwdConfirm(e.target.value)}
+              placeholder={form.adminPassword || 'aditya@1989'}
+            />
+          </div>
+          <p className="text-[10px] text-navy/40">{t('adminPasswordHint')}</p>
+          <button
+            type="button"
+            onClick={() => {
+              logout()
+              navigate('/gate', { replace: true })
+            }}
+            className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+          >
+            {t('logout')}
+          </button>
+        </div>
       </section>
 
       <button

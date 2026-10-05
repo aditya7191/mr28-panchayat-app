@@ -1,11 +1,13 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
   CreditCard,
   Home,
+  LogOut,
   Settings,
   Users,
 } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
 import { isDueSoon, isOverdue } from '../utils/format'
@@ -22,9 +24,16 @@ const nav = [
 export function Layout() {
   const { t, lang, toggle } = useI18n()
   const { members, settings } = useStore()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const reminderCount = members.filter(
     (m) => isOverdue(m) || isDueSoon(m),
   ).length
+
+  function handleLogout() {
+    logout()
+    navigate('/gate', { replace: true })
+  }
 
   return (
     <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col bg-cream">
@@ -48,14 +57,28 @@ export function Layout() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={toggle}
-            className="shrink-0 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold"
-            aria-label="Toggle language"
-          >
-            {lang === 'gu' ? 'EN' : 'ગુ'}
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="hidden rounded-full bg-saffron/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white xs:inline sm:inline">
+              {t('adminMode')}
+            </span>
+            <button
+              type="button"
+              onClick={toggle}
+              className="rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold"
+              aria-label="Toggle language"
+            >
+              {lang === 'gu' ? 'EN' : 'ગુ'}
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-white/30 bg-white/10 p-1.5"
+              aria-label={t('logout')}
+              title={t('logout')}
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
