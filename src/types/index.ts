@@ -1,0 +1,74 @@
+export type Lang = 'gu' | 'en'
+export type FeePlan = 'monthly' | 'yearly'
+export type MemberStatus = 'active' | 'inactive'
+export type PaymentMethod = 'cash' | 'upi' | 'bank'
+
+export interface Member {
+  id: string
+  membershipNo: string
+  name: string
+  phone: string
+  address: string
+  feePlan: FeePlan
+  status: MemberStatus
+  nextDueDate: string // YYYY-MM-DD
+  notes: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Payment {
+  id: string
+  receiptNo: string
+  memberId: string
+  amount: number
+  method: PaymentMethod
+  periodFrom: string // YYYY-MM-DD
+  periodTo: string // YYYY-MM-DD
+  paidAt: string // ISO datetime
+  notes: string
+}
+
+export interface Settings {
+  orgNameGu: string
+  orgNameEn: string
+  orgSubtitleGu: string
+  orgSubtitleEn: string
+  areaCode: string
+  monthlyFee: number
+  yearlyFee: number
+  nextMemberCounter: number
+  nextReceiptCounter: number
+  defaultLang: Lang
+  upiId: string
+  bankDetails: string
+  /** After saving a payment, auto-open wa.me with digital receipt. Default ON. */
+  autoWhatsAppAfterPayment: boolean
+  /** Delay (ms) between sequential reminder WhatsApp opens. Default 2000. */
+  whatsAppBatchDelayMs: number
+}
+
+export interface AppData {
+  version: number
+  settings: Settings
+  members: Member[]
+  payments: Payment[]
+  exportedAt?: string
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  orgNameGu: 'મીરા રોડ સ્થાનિક પંચાયત-૨૮',
+  orgNameEn: 'Mira Road Sthanik Panchayat-28',
+  orgSubtitleGu: 'શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા ચમાર સમાજ',
+  orgSubtitleEn: 'Shree Sant Shiromani Rohidas Vanshi Vadhiyara Chamar Samaj',
+  areaCode: '28',
+  monthlyFee: 50,
+  yearlyFee: 600,
+  nextMemberCounter: 1,
+  nextReceiptCounter: 1,
+  defaultLang: 'gu',
+  upiId: '',
+  bankDetails: '',
+  autoWhatsAppAfterPayment: true,
+  whatsAppBatchDelayMs: 2000,
+}
