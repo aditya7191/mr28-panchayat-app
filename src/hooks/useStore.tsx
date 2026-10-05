@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -27,12 +28,24 @@ import {
   todayISO,
   uid,
 } from '../utils/format'
+import {
+  canPush,
+  isCloudSyncEnabled,
+  mergeRemoteWithLocalPassword,
+  pullCloudData,
+  pushCloudData,
+  shouldPreferRemote,
+  type SyncStatus,
+} from '../sync'
 
 interface StoreCtx {
   ready: boolean
   settings: Settings
   members: Member[]
   payments: Payment[]
+  syncStatus: SyncStatus
+  syncError: string
+  lastSyncedAt: string | null
   updateSettings: (s: Settings) => Promise<void>
   addMember: (input: {
     name: string
@@ -59,16 +72,128 @@ interface StoreCtx {
   importData: (data: AppData) => Promise<void>
   clearData: () => Promise<void>
   refresh: () => Promise<void>
+  pullCloud: () => Promise<boolean>
+  pushCloud: () => Promise<boolean>
   getMember: (id: string) => Member | undefined
 }
 
 const Ctx = createContext<StoreCtx | null>(null)
+
+function snapshot(
+  settings: Settings,
+  members: Member[],
+  payments: Payment[],
+): AppData {
+  return {
+    version: 1,
+    settings,
+    members,
+    payments,
+    exportedAt: new Date().toISOString(),
+  }
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const [syncError, setSyncError] = useState('')
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
+  const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stateRef = useRef({ settings: null as Settings | null, members, payments })
+  stateRef.current = { settings, members, payments }
+
+  const persistAll = useCallback(async (data: AppData) => {
+    await Promise.all([
+      saveSettings(data.settings),
+      saveMembers(data.members),
+      savePayments(data.payments),
+    ])
+  }, [])
+
+  const schedulePush = useCallback(() => {
+    if (!canPush()) {
+      setSyncStatus((s) => (s === 'error' ? s : 'readonly'))
+      return
+    }
+    if (pushTimer.current) clearTimeout(pushTimer.current)
+    pushTimer.current = setTimeout(() => {
+      void (async () => {
+        const { settings: s, members: m, payments: p } = stateRef.current
+        if (!s) return
+        setSyncStatus('pushing')
+        setSyncError('')
+        const result = await pushCloudData(snapshot(s, m, p))
+        if (result.ok) {
+          setSyncStatus('ok')
+          setLastSyncedAt(new Date().toISOString())
+        } else {
+          setSyncStatus('error')
+          setSyncError(result.error || 'Push failed')
+        }
+      })()
+    }, 900)
+  }, [])
+
+  const pullCloud = useCallback(async () => {
+    if (!isCloudSyncEnabled()) return false
+    setSyncStatus('pulling')
+    setSyncError('')
+    const localPwd =
+      stateRef.current.settings?.adminPassword ||
+      (await loadSettings()).adminPassword
+    const result = await pullCloudData()
+    if (!result.ok || !result.data) {
+      setSyncStatus(canPush() ? 'ok' : 'readonly')
+      if (result.error && result.error !== 'Cloud sync disabled') {
+        setSyncError(result.error)
+      }
+      return false
+    }
+    const merged = mergeRemoteWithLocalPassword(result.data, localPwd)
+    const local: AppData = {
+      version: 1,
+      settings: stateRef.current.settings || (await loadSettings()),
+      members: stateRef.current.members,
+      payments: stateRef.current.payments,
+      exportedAt: lastSyncedAt || undefined,
+    }
+    // Always take remote for first load / when remote is newer or has data we lack
+    const localEmpty =
+      local.members.length === 0 && local.payments.length === 0
+    if (localEmpty || shouldPreferRemote(local, merged) || !ready) {
+      await persistAll(merged)
+      setSettings(merged.settings)
+      setMembers(merged.members)
+      setPayments(merged.payments)
+    }
+    setSyncStatus(canPush() ? 'ok' : 'readonly')
+    setLastSyncedAt(new Date().toISOString())
+    return true
+  }, [lastSyncedAt, persistAll, ready])
+
+  const pushCloud = useCallback(async () => {
+    const { settings: s, members: m, payments: p } = stateRef.current
+    if (!s) return false
+    if (!canPush()) {
+      setSyncStatus('readonly')
+      setSyncError('No GitHub token — add one in Settings → Cloud Sync')
+      return false
+    }
+    setSyncStatus('pushing')
+    setSyncError('')
+    const result = await pushCloudData(snapshot(s, m, p))
+    if (result.ok) {
+      setSyncStatus('ok')
+      setLastSyncedAt(new Date().toISOString())
+      return true
+    }
+    setSyncStatus('error')
+    setSyncError(result.error || 'Push failed')
+    return false
+  }, [])
 
   const refresh = useCallback(async () => {
     const [s, m, p] = await Promise.all([
@@ -79,17 +204,72 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSettings(s)
     setMembers(m)
     setPayments(p)
+
+    // Pull shared cloud data so iPhone/Android see the same roster
+    if (isCloudSyncEnabled()) {
+      setSyncStatus('pulling')
+      const result = await pullCloudData()
+      if (result.ok && result.data) {
+        const merged = mergeRemoteWithLocalPassword(result.data, s.adminPassword)
+        const local: AppData = {
+          version: 1,
+          settings: s,
+          members: m,
+          payments: p,
+          exportedAt: undefined,
+        }
+        const localEmpty = m.length === 0 && p.length === 0
+        if (localEmpty || shouldPreferRemote(local, merged)) {
+          await persistAll(merged)
+          setSettings(merged.settings)
+          setMembers(merged.members)
+          setPayments(merged.payments)
+        } else if (canPush() && (m.length > 0 || p.length > 0)) {
+          // Local has data cloud lacks — push so other devices catch up
+          void pushCloudData(snapshot(s, m, p)).then((r) => {
+            if (r.ok) setLastSyncedAt(new Date().toISOString())
+          })
+        }
+        setSyncStatus(canPush() ? 'ok' : 'readonly')
+        setLastSyncedAt(new Date().toISOString())
+      } else {
+        setSyncStatus(canPush() ? 'ok' : 'readonly')
+        if (result.error) setSyncError(result.error)
+      }
+    }
+
     setReady(true)
-  }, [])
+  }, [persistAll])
 
   useEffect(() => {
     void refresh()
   }, [refresh])
 
-  const updateSettings = useCallback(async (s: Settings) => {
-    await saveSettings(s)
-    setSettings(s)
+  // Re-pull when app becomes visible (iOS Safari / Android Chrome tab switch)
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible' && ready) {
+        void pullCloud()
+      }
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [pullCloud, ready])
+
+  useEffect(() => {
+    return () => {
+      if (pushTimer.current) clearTimeout(pushTimer.current)
+    }
   }, [])
+
+  const updateSettings = useCallback(
+    async (s: Settings) => {
+      await saveSettings(s)
+      setSettings(s)
+      schedulePush()
+    },
+    [schedulePush],
+  )
 
   const addMember = useCallback(
     async (input: {
@@ -125,9 +305,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await Promise.all([saveMembers(nextMembers), saveSettings(nextSettings)])
       setMembers(nextMembers)
       setSettings(nextSettings)
+      schedulePush()
       return member
     },
-    [members, settings],
+    [members, settings, schedulePush],
   )
 
   const updateMember = useCallback(
@@ -139,8 +320,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       )
       await saveMembers(next)
       setMembers(next)
+      schedulePush()
     },
-    [members],
+    [members, schedulePush],
   )
 
   const deleteMember = useCallback(
@@ -150,8 +332,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await Promise.all([saveMembers(next), savePayments(nextPay)])
       setMembers(next)
       setPayments(nextPay)
+      schedulePush()
     },
-    [members, payments],
+    [members, payments, schedulePush],
   )
 
   const addPayment = useCallback(
@@ -204,9 +387,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPayments(nextPayments)
       setMembers(nextMembers)
       setSettings(nextSettings)
+      schedulePush()
       return payment
     },
-    [members, payments, settings],
+    [members, payments, settings, schedulePush],
   )
 
   const deletePayment = useCallback(
@@ -214,8 +398,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const next = payments.filter((p) => p.id !== id)
       await savePayments(next)
       setPayments(next)
+      schedulePush()
     },
-    [payments],
+    [payments, schedulePush],
   )
 
   const exportData = useCallback(() => exportAllData(), [])
@@ -224,14 +409,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async (data: AppData) => {
       await importAllData(data)
       await refresh()
+      schedulePush()
     },
-    [refresh],
+    [refresh, schedulePush],
   )
 
   const clearData = useCallback(async () => {
     await clearAllData()
     await refresh()
-  }, [refresh])
+    schedulePush()
+  }, [refresh, schedulePush])
 
   const getMember = useCallback(
     (id: string) => members.find((m) => m.id === id),
@@ -245,6 +432,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       settings,
       members,
       payments,
+      syncStatus,
+      syncError,
+      lastSyncedAt,
       updateSettings,
       addMember,
       updateMember,
@@ -255,6 +445,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       importData,
       clearData,
       refresh,
+      pullCloud,
+      pushCloud,
       getMember,
     }
   }, [
@@ -262,6 +454,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     settings,
     members,
     payments,
+    syncStatus,
+    syncError,
+    lastSyncedAt,
     updateSettings,
     addMember,
     updateMember,
@@ -272,6 +467,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     importData,
     clearData,
     refresh,
+    pullCloud,
+    pushCloud,
     getMember,
   ])
 
@@ -298,9 +495,6 @@ export function suggestPaymentDefaults(member: Member, settings: Settings) {
     member.feePlan === 'yearly'
       ? advanceDueDate(from, 'yearly')
       : advanceDueDate(from, 'monthly')
-  // periodTo is end of paid period — for monthly, pay for the month starting nextDue
-  // Simpler: periodFrom = nextDue, periodTo = nextDue + plan - 1 day conceptually
-  // We use advanceDueDate as the new next due (= end of paid period)
   return {
     amount: defaultAmount(member.feePlan, settings),
     periodFrom: from,

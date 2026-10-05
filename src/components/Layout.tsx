@@ -23,7 +23,7 @@ const nav = [
 
 export function Layout() {
   const { t, lang, toggle } = useI18n()
-  const { members, settings } = useStore()
+  const { members, settings, syncStatus } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
   const reminderCount = members.filter(
@@ -58,6 +58,28 @@ export function Layout() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                syncStatus === 'error'
+                  ? 'bg-danger/90 text-white'
+                  : syncStatus === 'ok'
+                    ? 'bg-success/90 text-white'
+                    : syncStatus === 'readonly'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/15 text-white/80'
+              }`}
+              title={t('cloudSync')}
+            >
+              {syncStatus === 'pushing' || syncStatus === 'pulling'
+                ? '…'
+                : syncStatus === 'ok'
+                  ? '☁'
+                  : syncStatus === 'readonly'
+                    ? '☁⌀'
+                    : syncStatus === 'error'
+                      ? '☁!'
+                      : '☁'}
+            </span>
             <span className="hidden rounded-full bg-saffron/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white xs:inline sm:inline">
               {t('adminMode')}
             </span>

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "settings": {
+    "orgNameGu": "મીરા રોડ સ્થાનિક પંચાયત-૨૮",
+    "orgNameEn": "Mira Road Sthanik Panchayat-28",
+    "orgSubtitleGu": "શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા ચમાર સમાજ",
+    "orgSubtitleEn": "Shree Sant Shiromani Rohidas Vanshi Vadhiyara Chamar Samaj",
+    "areaCode": "28",
+    "monthlyFee": 50,
+    "yearlyFee": 600,
+    "nextMemberCounter": 1,
+    "nextReceiptCounter": 1,
+    "defaultLang": "gu",
+    "upiId": "",
+    "bankDetails": "",
+    "autoWhatsAppAfterPayment": true,
+    "whatsAppBatchDelayMs": 2000
+  },
+  "members": [],
+  "payments": [],
+  "exportedAt": "2026-10-05T16:59:00.000Z"
+}

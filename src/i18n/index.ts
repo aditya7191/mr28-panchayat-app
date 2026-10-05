@@ -148,6 +148,37 @@ const strings = {
   },
   openWhatsAppReceipt: { gu: 'WhatsApp રસીદ', en: 'WhatsApp receipt' },
 
+  // Cloud sync
+  cloudSync: { gu: 'ક્લાઉડ સિંક', en: 'Cloud Sync' },
+  cloudSyncHint: {
+    gu: 'iPhone અને Android પર એક જ સભ્ય યાદી. વાંચવા માટે ટોકન જરૂર નથી; લખવા માટે GitHub gist PAT.',
+    en: 'Same member list on iPhone and Android. Read needs no token; write needs a GitHub gist PAT.',
+  },
+  cloudSyncEnable: { gu: 'ક્લાઉડ સિંક ચાલુ', en: 'Enable cloud sync' },
+  cloudSyncToken: { gu: 'GitHub PAT (gist scope)', en: 'GitHub PAT (gist scope)' },
+  cloudSyncTokenHint: {
+    gu: 'ફક્ત આ ડિવાઇસ પર સાચવાય (localStorage). ક્યારેય gitમાં ન મૂકો. Classic token → gist scope.',
+    en: 'Stored only on this device (localStorage). Never commit to git. Classic token → gist scope.',
+  },
+  cloudSyncCreateToken: { gu: 'ટોકન બનાવો', en: 'Create token' },
+  cloudSyncPull: { gu: 'ક્લાઉડથી ખેંચો', en: 'Pull from cloud' },
+  cloudSyncPush: { gu: 'ક્લાઉડ પર મોકલો', en: 'Push to cloud' },
+  cloudSyncStatus: { gu: 'સ્થિતિ', en: 'Status' },
+  cloudSyncReadonly: {
+    gu: 'ફક્ત વાંચી શકાય — લખવા માટે PAT મૂકો',
+    en: 'Read-only — paste a PAT to enable writes',
+  },
+  cloudSyncOk: { gu: 'સિંક થયું', en: 'Synced' },
+  cloudSyncPushing: { gu: 'મોકલી રહ્યા છીએ…', en: 'Pushing…' },
+  cloudSyncPulling: { gu: 'ખેંચી રહ્યા છીએ…', en: 'Pulling…' },
+  cloudSyncError: { gu: 'સિંક ભૂલ', en: 'Sync error' },
+  cloudSyncSavedToken: { gu: 'ટોકન સાચવ્યો', en: 'Token saved' },
+  cloudSyncClearedToken: { gu: 'ટોકન કાઢ્યો', en: 'Token cleared' },
+  cloudSyncPrivacy: {
+    gu: 'નોંધ: ક્લાઉડ ડેટા public gist પર છે (સભ્ય નામ/ફોન સહિત). એડમિન પાસવર્ડ ક્લાઉડમાં નથી.',
+    en: 'Note: cloud data lives in a public gist (includes member names/phones). Admin password is never uploaded.',
+  },
+
 
   // Auth / Gate
   gateTitle: { gu: 'MR28 પંચાયત', en: 'MR28 Panchayat' },
@@ -189,8 +220,8 @@ const strings = {
     en: 'Search name / membership no…',
   },
   publicNoMembers: {
-    gu: 'આ ડિવાઇસ પર હજુ કોઈ સભ્ય નથી.',
-    en: 'No members on this device yet.',
+    gu: 'હજુ કોઈ સભ્ય નથી — એડમિન ઉમેરે ત્યારે અહીં દેખાશે.',
+    en: 'No members yet — they appear here when admin adds them (cloud sync).',
   },
 
   // Receipt image share

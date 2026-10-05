@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
@@ -9,6 +9,14 @@ import {
   membersToCsv,
   paymentsToCsv,
 } from '../utils/format'
+import {
+  PAT_HELP_URL,
+  canPush,
+  getSyncToken,
+  isCloudSyncEnabled,
+  setCloudSyncEnabled,
+  setSyncToken,
+} from '../sync'
 
 export function Settings() {
   const { t, lang, setLang } = useI18n()
@@ -20,13 +28,25 @@ export function Settings() {
     clearData,
     members,
     payments,
+    syncStatus,
+    syncError,
+    lastSyncedAt,
+    pullCloud,
+    pushCloud,
   } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState<SettingsType>({ ...settings })
   const [msg, setMsg] = useState('')
   const [pwdConfirm, setPwdConfirm] = useState('')
+  const [tokenInput, setTokenInput] = useState('')
+  const [syncOn, setSyncOn] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setTokenInput(getSyncToken())
+    setSyncOn(isCloudSyncEnabled())
+  }, [])
 
   function patch<K extends keyof SettingsType>(key: K, value: SettingsType[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -318,6 +338,117 @@ export function Settings() {
         {t('saveSettings')}
       </button>
 
+
+      <section className={section}>
+        <h3 className="mb-3 text-sm font-bold text-navy">{t('cloudSync')}</h3>
+        <p className="mb-3 text-[11px] leading-snug text-navy/55">{t('cloudSyncHint')}</p>
+
+        <label className="mb-3 flex cursor-pointer items-start gap-3 rounded-lg border border-navy/10 bg-cream/50 p-3">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 accent-saffron"
+            checked={syncOn}
+            onChange={(e) => {
+              const on = e.target.checked
+              setSyncOn(on)
+              setCloudSyncEnabled(on)
+            }}
+          />
+          <span className="block text-sm font-semibold text-navy">
+            {t('cloudSyncEnable')}
+          </span>
+        </label>
+
+        <div className="mb-3 rounded-lg border border-navy/10 bg-cream/40 px-3 py-2 text-[11px] text-navy/70">
+          <span className="font-semibold">{t('cloudSyncStatus')}: </span>
+          {syncStatus === 'pushing' && t('cloudSyncPushing')}
+          {syncStatus === 'pulling' && t('cloudSyncPulling')}
+          {syncStatus === 'ok' && t('cloudSyncOk')}
+          {syncStatus === 'readonly' && t('cloudSyncReadonly')}
+          {syncStatus === 'error' && (
+            <span className="text-danger">
+              {t('cloudSyncError')}: {syncError || '—'}
+            </span>
+          )}
+          {(syncStatus === 'idle' || syncStatus === 'ok' || syncStatus === 'readonly') &&
+            lastSyncedAt && (
+              <span className="mt-0.5 block text-navy/45">
+                {new Date(lastSyncedAt).toLocaleString()}
+              </span>
+            )}
+          {syncError && syncStatus !== 'error' && (
+            <span className="mt-0.5 block text-danger">{syncError}</span>
+          )}
+        </div>
+
+        <div className="mb-2">
+          <label className={label}>{t('cloudSyncToken')}</label>
+          <input
+            className={field}
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            placeholder="ghp_… or github_pat_…"
+          />
+          <p className="mt-1 text-[10px] text-navy/40">{t('cloudSyncTokenHint')}</p>
+        </div>
+
+        <div className="mb-3 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSyncToken(tokenInput)
+              setMsg(
+                tokenInput.trim() ? t('cloudSyncSavedToken') : t('cloudSyncClearedToken'),
+              )
+              setTimeout(() => setMsg(''), 2000)
+              if (tokenInput.trim()) void pushCloud()
+            }}
+            className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+          >
+            {t('save')} — PAT
+          </button>
+          <a
+            href={PAT_HELP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl border border-saffron/40 bg-saffron/10 py-2.5 text-center text-sm font-semibold text-saffron-dark"
+          >
+            {t('cloudSyncCreateToken')} ↗
+          </a>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => void pullCloud().then(() => {
+                setMsg(t('cloudSyncOk'))
+                setTimeout(() => setMsg(''), 2000)
+              })}
+              className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+            >
+              {t('cloudSyncPull')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void pushCloud().then((ok) => {
+                setMsg(ok ? t('cloudSyncOk') : t('cloudSyncError'))
+                setTimeout(() => setMsg(''), 2500)
+              })}
+              className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+            >
+              {t('cloudSyncPush')}
+            </button>
+          </div>
+        </div>
+        <p className="text-[10px] leading-snug text-navy/40">{t('cloudSyncPrivacy')}</p>
+        {!canPush() && syncOn && (
+          <p className="mt-2 rounded-lg bg-saffron/10 px-2 py-1.5 text-[11px] font-semibold text-saffron-dark">
+            {t('cloudSyncReadonly')}
+          </p>
+        )}
+      </section>
+
       <section className={section}>
         <h3 className="mb-3 text-sm font-bold text-navy">{t('dataBackup')}</h3>
         <div className="flex flex-col gap-2">
@@ -362,8 +493,8 @@ export function Settings() {
           </button>
         </div>
         <p className="mt-2 text-[11px] text-navy/40">
-          Data stays in this browser (IndexedDB). Export JSON regularly for backup.
-          / ડેટા આ બ્રાઉઝરમાં સાચવાય છે. નિયમિત JSON બેકઅપ લો.
+          Local cache: IndexedDB. Shared source of truth: cloud sync (GitHub gist).
+          Still export JSON as backup. / સ્થાનિક કૅશ IndexedDB; શેર ડેટા ક્લાઉડ સિંક.
         </p>
       </section>
     </div>

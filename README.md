@@ -34,7 +34,7 @@ npm run preview
 4. **રસીદ / Receipts** — જુઓ, પ્રિન્ટ, શેર / કૉપી
 5. **રિમાઇન્ડર / Reminders** — મુદત વીતી / ૭ દિવસમાં; WhatsApp auto-open (ગુ+EN) + **Send all**
 6. **સેટિંગ્સ / Settings** — દર ₹50/₹600, સંસ્થા નામ, કાઉન્ટર, ભાષા, WhatsApp ટૉગલ, બેકઅપ
-7. **ડેટા** — IndexedDB (બ્રાઉઝરમાં); JSON / CSV એક્સપોર્ટ–ઇમ્પોર્ટ
+7. **ડેટા** — IndexedDB cache + **Cloud Sync** (GitHub gist) across iPhone/Android; JSON / CSV backup
 8. **PWA-ready** — manifest + theme; મોબાઇલ બ્રાઉઝર માટે
 
 ભાષા ટૉગલ: હેડરમાં **EN / ગુ**
@@ -72,8 +72,8 @@ npm run preview
 3. **CSV એક્સપોર્ટ** — સભ્યો અને ચુકવણી અલગ ફાઇલો
 4. નવા ફોન/બ્રાઉઝર પર: **JSON ઇમ્પોર્ટ** થી પાછું લાવો
 
-> ડેટા ફક્ત આ બ્રાઉઝરમાં રહે છે. નિયમિત JSON બેકઅપ લો.  
-> Data stays in this browser only. Export JSON regularly.
+> Cloud Sync shares members/payments across devices (see **CLOUD_SYNC.md**). IndexedDB is a local cache. Still export JSON as backup.  
+> ક્લાઉડ સિંકથી ફોન વચ્ચે ડેટા શેર થાય. JSON બેકઅપ પણ રાખો.
 
 ---
 
@@ -98,11 +98,12 @@ Settings:
 
 ## ટેક સ્ટેક / Stack
 
-Vite · React · TypeScript · Tailwind CSS v4 · IndexedDB (idb) · date-fns · lucide-react
+Vite · React · TypeScript · Tailwind CSS v4 · IndexedDB (idb) · GitHub Gist cloud sync · date-fns · lucide-react
 
 ---
 
 ## વિકાસકર્તા નોંધ / Note
 
-Local app only — public deploy નહીં સુધી પૂછ્યું ન હોય.  
+Live: https://aditya7191.github.io/mr28-panchayat-app/  
+Cloud sync setup: [CLOUD_SYNC.md](./CLOUD_SYNC.md)  
 Vice Secretary: Aditya Solanki · Area code 28 (Mira Road)
