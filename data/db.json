@@ -8,7 +8,7 @@
     "areaCode": "28",
     "monthlyFee": 50,
     "yearlyFee": 600,
-    "nextMemberCounter": 1,
+    "nextMemberCounter": 2,
     "nextReceiptCounter": 1,
     "defaultLang": "gu",
     "upiId": "",
@@ -16,7 +16,21 @@
     "autoWhatsAppAfterPayment": true,
     "whatsAppBatchDelayMs": 2000
   },
-  "members": [],
+  "members": [
+    {
+      "id": "seed-demo-1",
+      "membershipNo": "MR28-0001",
+      "name": "Cloud Sync Demo Member",
+      "phone": "",
+      "address": "",
+      "feePlan": "monthly",
+      "status": "active",
+      "nextDueDate": "2026-11-01",
+      "notes": "Seeded to verify cross-device cloud sync — replace/delete in Admin",
+      "createdAt": "2026-10-05T17:02:16.000Z",
+      "updatedAt": "2026-10-05T17:02:16.000Z"
+    }
+  ],
   "payments": [],
-  "exportedAt": "2026-10-05T16:59:00.000Z"
+  "exportedAt": "2026-10-05T17:02:16.000Z"
 }
