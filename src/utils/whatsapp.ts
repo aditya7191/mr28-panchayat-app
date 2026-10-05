@@ -24,13 +24,42 @@ export function buildWhatsAppUrl(phone: string, text: string): string {
   return digits ? `https://wa.me/${digits}?text=${q}` : `https://wa.me/?text=${q}`
 }
 
-/** Open WhatsApp chat with prefilled message. Returns false if no usable phone. */
-export function openWhatsApp(phone: string, text: string): boolean {
-  const digits = normalizePhoneForWhatsApp(phone)
-  if (!digits && !text) return false
+/**
+ * Open WhatsApp chat with prefilled message (works without a phone: the user
+ * picks the chat). Call from a click handler. If the popup is blocked we
+ * can navigate the current tab instead (opts.sameTabFallback), so it never
+ * silently does nothing. Batch queue keeps the old behaviour (no fallback).
+ * Returns true if WhatsApp was opened (or navigation started).
+ */
+export function openWhatsApp(
+  phone: string,
+  text: string,
+  opts?: { sameTabFallback?: boolean },
+): boolean {
   const url = buildWhatsAppUrl(phone, text)
-  window.open(url, '_blank', 'noopener,noreferrer')
-  return !!digits
+  let w: Window | null = null
+  try {
+    // No 'noopener' feature: with it window.open() always returns null and we
+    // could not detect a blocked popup.
+    w = window.open(url, '_blank')
+  } catch {
+    w = null
+  }
+  if (w) {
+    try {
+      w.opener = null
+    } catch {
+      /* ignore */
+    }
+    return true
+  }
+  if (!opts?.sameTabFallback) return false
+  try {
+    window.location.href = url
+    return true
+  } catch {
+    return false
+  }
 }
 
 export type WhatsAppQueueItem = {

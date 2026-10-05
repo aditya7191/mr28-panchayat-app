@@ -135,8 +135,8 @@ const strings = {
     en: 'Auto-open WhatsApp after payment',
   },
   autoWhatsAppAfterPaymentHint: {
-    gu: 'રસીદ સાચવ્યા પછી રસીદનો ફોટો Web Share / WhatsApp થી મોકલવાનો પ્રયાસ.',
-    en: 'After saving a payment, tries to share a receipt photo via Web Share / WhatsApp.',
+    gu: 'રસીદ સાચવ્યા પછી રસીદનો ફોટો WhatsApp પર મોકલવા શેર ખોલે. ફોન રોકે તો મોટું બટન બતાવે.',
+    en: 'After saving a payment, opens share to send the receipt photo to WhatsApp. If the phone blocks it, a big button is shown.',
   },
   whatsAppBatchDelay: {
     gu: 'બેચ મોકલવામાં વિલંબ (સેકન્ડ)',
@@ -233,6 +233,56 @@ const strings = {
     en: 'Receipt photo saved. Attach the photo in WhatsApp and send.',
   },
   openWhatsAppText: { gu: 'WhatsApp ટેક્સ્ટ', en: 'WhatsApp text' },
+  sendReceiptPhotoWA: {
+    gu: 'WhatsApp પર રસીદ ફોટો મોકલો',
+    en: 'Send receipt photo on WhatsApp',
+  },
+  receiptPhotoShared: { gu: 'રસીદ ફોટો શેર થયો ✓', en: 'Receipt photo shared ✓' },
+  receiptImageFailed: {
+    gu: 'રસીદ ફોટો બનાવી શકાયો નહીં. ફરી પ્રયાસ કરો અથવા ટેક્સ્ટ મોકલો.',
+    en: 'Could not create receipt photo. Retry or send as text.',
+  },
+  retry: { gu: 'ફરી પ્રયાસ', en: 'Retry' },
+  shareBlockedTap: {
+    gu: 'ફોને આપમેળે શેર રોક્યું. નીચેનું લીલું બટન દબાવો.',
+    en: 'Phone blocked auto-share. Tap the green button below.',
+  },
+  shareUnsupported: {
+    gu: 'આ બ્રાઉઝર ફોટો સીધો શેર કરી શકતું નથી. નીચેના વિકલ્પો વાપરો.',
+    en: 'This browser cannot share the photo directly. Use the options below.',
+  },
+  shareFailed: {
+    gu: 'શેર નિષ્ફળ. નીચેના વિકલ્પો વાપરો.',
+    en: 'Share failed. Use the options below.',
+  },
+  sendReceiptTitle: { gu: 'રસીદ ફોટો મોકલો', en: 'Send receipt photo' },
+  copyPhoto: { gu: 'ફોટો કૉપી કરો', en: 'Copy photo' },
+  photoCopied: {
+    gu: 'ફોટો કૉપી થયો. હવે WhatsApp ચેટમાં Paste કરો.',
+    en: 'Photo copied. Now paste it in the WhatsApp chat.',
+  },
+  copyPhotoFailed: { gu: 'ફોટો કૉપી ન થયો', en: 'Could not copy photo' },
+  photoSaved: {
+    gu: 'ફોટો સાચવ્યો. WhatsAppમાં 📎/+ થી જોડો.',
+    en: 'Photo saved. Attach it in WhatsApp with 📎/+.',
+  },
+  openWhatsAppChat: { gu: 'WhatsApp ચેટ ખોલો', en: 'Open WhatsApp chat' },
+  whatsAppOpenFailed: {
+    gu: 'WhatsApp ખૂલ્યું નહીં (popup અવરોધિત?)',
+    en: 'WhatsApp did not open (popup blocked?)',
+  },
+  iosShareSteps: {
+    gu: 'iPhone: ફોટા પર લાંબું દબાવો → “Save to Photos” અથવા “Copy”. પછી “WhatsApp ચેટ ખોલો” → 📎/+ થી ફોટો જોડો અથવા Paste કરો.',
+    en: 'iPhone: long-press the photo → “Save to Photos” or “Copy”. Then “Open WhatsApp chat” → attach with + or paste.',
+  },
+  androidShareSteps: {
+    gu: 'ફોટો સાચવો/કૉપી કરો, પછી “WhatsApp ચેટ ખોલો” → 📎 થી ફોટો જોડો અથવા Paste કરો.',
+    en: 'Save or copy the photo, then “Open WhatsApp chat” → attach with 📎 or paste.',
+  },
+  noPhoneChooseChat: {
+    gu: 'સભ્યનો ફોન નથી — WhatsAppમાં ચેટ પસંદ કરો.',
+    en: 'No member phone — pick the chat in WhatsApp.',
+  },
 
   // Common
   required: { gu: 'જરૂરી', en: 'Required' },
