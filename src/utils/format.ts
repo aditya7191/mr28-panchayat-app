@@ -63,6 +63,16 @@ export function collectedThisMonth(payments: Payment[]): number {
   return paymentsThisMonth(payments).reduce((s, p) => s + p.amount, 0)
 }
 
+/** Transparency: sum of ALL recorded payments = total amount with Panchayat (કુલ જમા). */
+export function totalCollected(payments: Payment[]): number {
+  return payments.reduce((s, p) => s + (Number(p.amount) || 0), 0)
+}
+
+/** Indian-grouped rupee amount, e.g. 1,25,000 */
+export function formatINR(n: number): string {
+  return n.toLocaleString('en-IN', { maximumFractionDigits: 2 })
+}
+
 export function defaultAmount(plan: FeePlan, settings: Settings): number {
   return plan === 'yearly' ? settings.yearlyFee : settings.monthlyFee
 }

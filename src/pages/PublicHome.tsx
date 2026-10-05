@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Search, Users } from 'lucide-react'
+import { ArrowLeft, IndianRupee, Search, Users } from 'lucide-react'
 import { Watermark } from '../components/Watermark'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
-import { formatDate } from '../utils/format'
+import { formatDate, formatINR, totalCollected } from '../utils/format'
 import type { Member, Payment } from '../types'
 
 function latestPaymentFor(
@@ -38,6 +38,8 @@ export function PublicHome() {
         )
       })
   }, [members, q])
+
+  const totalJama = useMemo(() => totalCollected(payments), [payments])
 
   return (
     <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col bg-cream">
@@ -78,6 +80,29 @@ export function PublicHome() {
           </p>
           <p className="text-[11px] text-navy/45">Jay Rohidas Baapu</p>
         </div>
+
+        <section
+          aria-label="કુલ જમા / Total collected"
+          className="rounded-2xl border-2 border-saffron bg-gradient-to-br from-saffron/15 to-saffron/5 p-5 text-center shadow-md"
+        >
+          <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-saffron text-white">
+            <IndianRupee size={22} />
+          </div>
+          <p className="text-sm font-bold text-navy">
+            કુલ જમા / Total collected
+          </p>
+          <p className="mt-1 text-4xl font-extrabold tracking-tight text-saffron-dark">
+            ₹{formatINR(totalJama)}
+          </p>
+          <p className="mt-2 text-[11px] leading-snug text-navy/60">
+            પંચાયત પાસે જમા રકમ (બધી ચુકવણીનો સરવાળો)
+            <br />
+            Amount with Panchayat (sum of all payments)
+          </p>
+          <p className="mt-1 text-[10px] text-navy/45">
+            {payments.length} રસીદ / receipts
+          </p>
+        </section>
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3">

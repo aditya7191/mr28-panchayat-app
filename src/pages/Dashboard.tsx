@@ -6,6 +6,8 @@ import { useStore } from '../hooks/useStore'
 import {
   collectedThisMonth,
   formatDate,
+  formatINR,
+  totalCollected,
   isOverdue,
 } from '../utils/format'
 
@@ -18,6 +20,7 @@ export function Dashboard() {
   const pending = active.filter(isOverdue)
   const collected = collectedThisMonth(payments)
   const recent = payments.slice(0, 5)
+  const totalJama = totalCollected(payments)
 
   return (
     <div className="flex flex-col gap-4">
@@ -25,6 +28,19 @@ export function Dashboard() {
         <h2 className="text-lg font-bold text-navy">{t('dashboardTitle')}</h2>
         <p className="text-xs text-navy/50">
           {lang === 'gu' ? settings.orgSubtitleGu : settings.orgSubtitleEn}
+        </p>
+      </div>
+
+      <div className="rounded-xl border-2 border-saffron bg-gradient-to-br from-saffron/15 to-saffron/5 p-4 shadow-sm">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-navy">
+          <IndianRupee size={16} className="text-saffron-dark" />
+          કુલ જમા / Total collected
+        </div>
+        <div className="mt-1 text-3xl font-extrabold text-saffron-dark">
+          ₹{formatINR(totalJama)}
+        </div>
+        <p className="mt-1 text-[11px] text-navy/60">
+          પંચાયત પાસે જમા · Amount with Panchayat · {payments.length} રસીદ / receipts
         </p>
       </div>
 
