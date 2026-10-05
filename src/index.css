@@ -52,3 +52,15 @@ body {
 .pb-safe {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
+
+/* Modal sheet height: vh fallback for browsers without dvh support,
+   dvh so the sheet never extends under mobile browser toolbars. */
+.modal-panel {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+
+/* Sticky modal action bar: clear the home indicator / browser chrome */
+.modal-footer {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
