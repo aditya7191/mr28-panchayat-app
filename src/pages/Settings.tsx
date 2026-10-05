@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { DeveloperCredit } from '../components/DeveloperCredit'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
@@ -497,6 +498,8 @@ export function Settings() {
           Still export JSON as backup. / સ્થાનિક કૅશ IndexedDB; શેર ડેટા ક્લાઉડ સિંક.
         </p>
       </section>
+
+      <DeveloperCredit className="pt-1" />
     </div>
   )
 }

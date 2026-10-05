@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, IndianRupee, Search, Users } from 'lucide-react'
+import { DeveloperCredit } from '../components/DeveloperCredit'
 import { Watermark } from '../components/Watermark'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
@@ -205,6 +206,8 @@ export function PublicHome() {
         >
           {t('adminLogin')}
         </Link>
+
+        <DeveloperCredit className="mt-2 pb-2" />
       </main>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Eye } from 'lucide-react'
+import { DeveloperCredit } from '../components/DeveloperCredit'
 import { Watermark } from '../components/Watermark'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
@@ -158,6 +159,8 @@ export function Gate() {
             </div>
           </form>
         )}
+
+        <DeveloperCredit className="mt-auto pt-4 pb-2" />
       </main>
     </div>
   )
