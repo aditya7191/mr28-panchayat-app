@@ -48,6 +48,8 @@ export interface Settings {
   whatsAppBatchDelayMs: number
   /** Admin gate password (default aditya@1989). Stored in settings. */
   adminPassword: string
+  /** Name shown as “Received by” on receipts (officer who collected fala). */
+  receivedBy: string
 }
 
 export interface AppData {
@@ -74,4 +76,5 @@ export const DEFAULT_SETTINGS: Settings = {
   autoWhatsAppAfterPayment: true,
   whatsAppBatchDelayMs: 2000,
   adminPassword: 'aditya@1989',
+  receivedBy: 'Aditya Solanki (Vice Secretary)',
 }

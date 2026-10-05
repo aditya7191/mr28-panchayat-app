@@ -67,7 +67,12 @@ const strings = {
   // Receipt
   receiptTitle: { gu: 'રસીદ / Receipt', en: 'Receipt' },
   receiptOf: { gu: 'પ્રાપ્તિ રસીદ', en: 'Payment Receipt' },
-  receivedFrom: { gu: 'પ્રાપ્ત કર્યું', en: 'Received from' },
+  receivedFrom: { gu: 'ફાળો આપનાર / સભ્ય', en: 'Paid by / Member' },
+  receivedBy: { gu: 'પ્રાપ્ત કરનાર', en: 'Received by' },
+  receivedByHint: {
+    gu: 'રસીદ પર “પ્રાપ્ત કરનાર” નામ. ડિફૉલ્ટ: Aditya Solanki (Vice Secretary).',
+    en: 'Name shown as “Received by” on receipts. Default: Aditya Solanki (Vice Secretary).',
+  },
   forPeriod: { gu: 'સમયગાળા માટે', en: 'For period' },
   paymentMethod: { gu: 'ચુકવણી પદ્ધતિ', en: 'Payment method' },
   date: { gu: 'તારીખ', en: 'Date' },

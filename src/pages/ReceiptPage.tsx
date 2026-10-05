@@ -18,6 +18,7 @@ import {
   buildReceiptShareCaption,
   buildReceiptShareText,
   formatDate,
+  receiptReceiverName,
 } from '../utils/format'
 import {
   canCopyImage,
@@ -73,7 +74,10 @@ export function ReceiptPage() {
       ? buildReceiptShareText(payment, member, settings)
       : ''
   const caption =
-    payment && member ? buildReceiptShareCaption(payment, member) : ''
+    payment && member
+      ? buildReceiptShareCaption(payment, member, settings)
+      : ''
+  const receiverName = receiptReceiverName(settings)
 
   const showToast = useCallback((msg: string, kind: ToastKind = 'info') => {
     setToast({ msg, kind })
@@ -117,6 +121,7 @@ export function ReceiptPage() {
           settings.orgNameEn,
           settings.orgSubtitleGu,
           settings.orgSubtitleEn,
+          receiverName,
           genNonce,
         ])
       : ''
@@ -143,6 +148,7 @@ export function ReceiptPage() {
         label: t('forPeriod'),
         value: `${formatDate(payment.periodFrom)} – ${formatDate(payment.periodTo)}`,
       },
+      { label: t('receivedBy'), value: receiverName, bold: true },
       ...(payment.notes ? [{ label: t('notes'), value: payment.notes }] : []),
     ]
     renderReceiptImage(
@@ -401,6 +407,7 @@ export function ReceiptPage() {
                 label={t('forPeriod')}
                 value={`${formatDate(payment.periodFrom)} – ${formatDate(payment.periodTo)}`}
               />
+              <Row label={t('receivedBy')} value={receiverName} bold />
               {payment.notes && <Row label={t('notes')} value={payment.notes} />}
             </div>
 

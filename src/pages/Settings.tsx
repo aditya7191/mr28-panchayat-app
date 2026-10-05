@@ -153,6 +153,16 @@ export function Settings() {
             <label className={label}>{t('orgSubtitleEn')}</label>
             <input className={field} value={form.orgSubtitleEn} onChange={(e) => patch('orgSubtitleEn', e.target.value)} />
           </div>
+          <div>
+            <label className={label}>{t('receivedBy')}</label>
+            <input
+              className={field}
+              value={form.receivedBy ?? ''}
+              onChange={(e) => patch('receivedBy', e.target.value)}
+              placeholder="Aditya Solanki (Vice Secretary)"
+            />
+            <p className="mt-1 text-[10px] text-navy/40">{t('receivedByHint')}</p>
+          </div>
         </div>
       </section>
 

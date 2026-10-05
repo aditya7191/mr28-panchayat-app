@@ -175,6 +175,11 @@ export function buildWhatsAppReminder(
   return lines.filter((l) => l !== undefined).join('\n')
 }
 
+export function receiptReceiverName(settings: Settings): string {
+  const name = (settings.receivedBy || '').trim()
+  return name || 'Aditya Solanki (Vice Secretary)'
+}
+
 export function buildReceiptShareText(
   payment: Payment,
   member: Member,
@@ -187,11 +192,12 @@ export function buildReceiptShareText(
     ``,
     `રસીદ / Receipt: ${payment.receiptNo}`,
     `તારીખ / Date: ${formatDate(payment.paidAt)}`,
-    `સભ્ય / Member: ${member.name}`,
-    `સભ્ય નં. / No.: ${member.membershipNo}`,
+    `ફાળો આપનાર / Paid by: ${member.name}`,
+    `સભ્ય નં. / Membership No.: ${member.membershipNo}`,
     `રકમ / Amount: ₹${payment.amount}`,
     `પદ્ધતિ / Method: ${payment.method}`,
     `સમયગાળો / Period: ${formatDate(payment.periodFrom)} – ${formatDate(payment.periodTo)}`,
+    `પ્રાપ્ત કરનાર / Received by: ${receiptReceiverName(settings)}`,
     ``,
     `આભાર! જય રોહિદાસ બાપુ.`,
   ].join('\n')
@@ -201,11 +207,17 @@ export function buildReceiptShareText(
 export function buildReceiptShareCaption(
   payment: Payment,
   member: Member,
+  settings?: Settings,
 ): string {
+  const receiver = settings ? receiptReceiverName(settings) : ''
   return [
     `રસીદ / Receipt: ${payment.receiptNo}`,
-    `સભ્ય / Member: ${member.name}`,
+    `ફાળો આપનાર / Paid by: ${member.name}`,
+    `સભ્ય નં. / No.: ${member.membershipNo}`,
     `રકમ / Amount: ₹${payment.amount}`,
+    ...(receiver
+      ? [`પ્રાપ્ત કરનાર / Received by: ${receiver}`]
+      : []),
     ``,
     `જય રોહિદાસ બાપુ / Jay Rohidas Baapu`,
   ].join('\n')
