@@ -37,14 +37,12 @@ export function Settings() {
     if (!next.adminPassword?.trim()) {
       next.adminPassword = 'aditya@1989'
     }
-    if (
-      next.adminPassword !== settings.adminPassword &&
-      pwdConfirm &&
-      pwdConfirm !== next.adminPassword
-    ) {
-      setMsg(t('wrongPassword'))
-      setTimeout(() => setMsg(''), 2500)
-      return
+    if (next.adminPassword !== (settings.adminPassword || 'aditya@1989')) {
+      if (!pwdConfirm || pwdConfirm !== next.adminPassword) {
+        setMsg(t('wrongPassword'))
+        setTimeout(() => setMsg(''), 2500)
+        return
+      }
     }
     await updateSettings(next)
     setForm(next)
