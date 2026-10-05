@@ -157,8 +157,8 @@ const strings = {
   },
   publicView: { gu: 'સાર્વજનિક જોવા', en: 'Public view' },
   publicViewHint: {
-    gu: 'સંસ્થા માહિતી અને ફાળો દર જુઓ (સભ્ય ડેટા વગર).',
-    en: 'View organisation info and fee rates (no member data).',
+    gu: 'કુલ સભ્યો, નામ, સભ્ય નં. અને ફાળો સ્થિતિ જુઓ (ફોન/સરનામું વગર).',
+    en: 'See member count, names, membership nos and fala status (no phone/address).',
   },
   adminLogin: { gu: 'એડમિન લૉગિન', en: 'Admin login' },
   adminLoginHint: {
@@ -183,6 +183,15 @@ const strings = {
   },
   adminMode: { gu: 'એડમિન', en: 'Admin' },
   publicMode: { gu: 'સાર્વજનિક', en: 'Public' },
+  publicMembersList: { gu: 'સભ્ય યાદી', en: 'Member list' },
+  publicSearchMembers: {
+    gu: 'નામ / સભ્ય નં. શોધો…',
+    en: 'Search name / membership no…',
+  },
+  publicNoMembers: {
+    gu: 'આ ડિવાઇસ પર હજુ કોઈ સભ્ય નથી.',
+    en: 'No members on this device yet.',
+  },
 
   // Receipt image share
   shareReceiptImage: { gu: 'રસીદ ફોટો શેર', en: 'Share receipt photo' },
