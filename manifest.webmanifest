@@ -1,0 +1,25 @@
+{
+  "name": "Mira Road Sthanik Panchayat-28",
+  "short_name": "MR28 પંચાયત",
+  "description": "Shree Sant Shiromani Rohidas Vanshi Vadhiyara Samaj — Membership & Fee Management",
+  "start_url": "/mr28-panchayat-app/",
+  "display": "standalone",
+  "background_color": "#f8f5f0",
+  "theme_color": "#1e3a5f",
+  "orientation": "portrait-primary",
+  "lang": "gu",
+  "icons": [
+    {
+      "src": "/mr28-panchayat-app/logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mr28-panchayat-app/logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
