@@ -1,7 +1,7 @@
 # MR28 પંચાયત App / Mira Road Sthanik Panchayat-28
 
 **મીરા રોડ સ્થાનિક પંચાયત-૨૮**  
-શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા ચમાર સમાજ
+શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા સમાજ
 
 Mobile-first membership & fee (ફાળો) management app for Unit 28 (Mira Road).
 

@@ -78,8 +78,8 @@ export interface AppData {
 export const DEFAULT_SETTINGS: Settings = {
   orgNameGu: 'મીરા રોડ સ્થાનિક પંચાયત-૨૮',
   orgNameEn: 'Mira Road Sthanik Panchayat-28',
-  orgSubtitleGu: 'શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા ચમાર સમાજ',
-  orgSubtitleEn: 'Shree Sant Shiromani Rohidas Vanshi Vadhiyara Chamar Samaj',
+  orgSubtitleGu: 'શ્રી સંત શિરોમણિ રોહિદાસ વંશી વઢિયારા સમાજ',
+  orgSubtitleEn: 'Shree Sant Shiromani Rohidas Vanshi Vadhiyara Samaj',
   areaCode: '28',
   monthlyFee: 50,
   yearlyFee: 600,
