@@ -70,7 +70,9 @@ npm run preview
 1. **સેટિંગ્સ** → **ડેટા / બેકઅપ**
 2. **JSON એક્સપોર્ટ** — સંપૂર્ણ બેકઅપ (સભ્યો + ચુકવણી + સેટિંગ્સ)
 3. **CSV એક્સપોર્ટ** — સભ્યો અને ચુકવણી અલગ ફાઇલો
-4. નવા ફોન/બ્રાઉઝર પર: **JSON ઇમ્પોર્ટ** થી પાછું લાવો
+4. **Excel ડાઉનલોડ** — `MR28-backup-YYYY-MM-DD.xlsx` (Members + Payments sheets)
+5. **PDF ડાઉનલોડ** — `MR28-backup-YYYY-MM-DD.pdf` summary (members + payments)
+6. નવા ફોન/બ્રાઉઝર પર: **JSON ઇમ્પોર્ટ** થી પાછું લાવો
 
 > Cloud Sync shares members/payments across devices (see **CLOUD_SYNC.md**). IndexedDB is a local cache. Still export JSON as backup.  
 > ક્લાઉડ સિંકથી ફોન વચ્ચે ડેટા શેર થાય. JSON બેકઅપ પણ રાખો.

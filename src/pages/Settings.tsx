@@ -132,6 +132,16 @@ export function Settings() {
     )
   }
 
+  async function handleExportExcel() {
+    const { downloadExcelBackup } = await import('../utils/backupExport')
+    downloadExcelBackup(members, payments)
+  }
+
+  async function handleExportPdf() {
+    const { downloadPdfBackup } = await import('../utils/backupExport')
+    downloadPdfBackup(settings, members, payments)
+  }
+
   async function handleImport(file: File) {
     try {
       const text = await file.text()
@@ -515,6 +525,20 @@ export function Settings() {
           </button>
           <button
             type="button"
+            onClick={() => void handleExportExcel()}
+            className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+          >
+            {t('exportExcel')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleExportPdf()}
+            className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
+          >
+            {t('exportPdf')}
+          </button>
+          <button
+            type="button"
             onClick={() => fileRef.current?.click()}
             className="rounded-xl border border-navy/20 py-2.5 text-sm font-semibold text-navy"
           >
@@ -541,9 +565,9 @@ export function Settings() {
         </div>
         <p className="mt-2 text-[11px] text-navy/40">
           ડેટા આ ફોનમાં (IndexedDB) સચવાય છે અને ક્લાઉડ સાથે એન્ટ્રી-દર-એન્ટ્રી મર્જ થાય છે —
-          ક્લાઉડમાં ન હોય તો પણ આ ફોનની એન્ટ્રી ક્યારેય કાઢવામાં આવતી નથી. JSON બેકઅપ પણ રાખો. /
+          ક્લાઉડમાં ન હોય તો પણ આ ફોનની એન્ટ્રી ક્યારેય કાઢવામાં આવતી નથી. JSON / Excel / PDF બેકઅપ પણ રાખો. /
           Data is stored on this phone (IndexedDB) and merged entry-by-entry with the cloud — entries
-          on this phone are never removed just because the cloud lacks them. Still export JSON as backup.
+          on this phone are never removed just because the cloud lacks them. Still export JSON, Excel, or PDF as offline backup.
         </p>
       </section>
 

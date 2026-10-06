@@ -128,6 +128,8 @@ const strings = {
   exportJson: { gu: 'JSON એક્સપોર્ટ', en: 'Export JSON' },
   importJson: { gu: 'JSON ઇમ્પોર્ટ', en: 'Import JSON' },
   exportCsv: { gu: 'CSV એક્સપોર્ટ', en: 'Export CSV' },
+  exportExcel: { gu: 'Excel ડાઉનલોડ', en: 'Excel download' },
+  exportPdf: { gu: 'PDF ડાઉનલોડ', en: 'PDF download' },
   importSuccess: { gu: 'ઇમ્પોર્ટ સફળ', en: 'Import successful' },
   importFail: { gu: 'ઇમ્પોર્ટ નિષ્ફળ — ફાઇલ તપાસો', en: 'Import failed — check file' },
   clearData: { gu: 'બધો ડેટા સાફ કરો', en: 'Clear All Data' },
