@@ -9,11 +9,18 @@ export {
 } from './config'
 export {
   pullCloudData,
+  pullCloudDataFresh,
   pushCloudData,
   canPush,
   sanitizeForCloud,
-  mergeRemoteWithLocalPassword,
-  shouldPreferRemote,
   type SyncResult,
   type SyncStatus,
 } from './githubSync'
+export {
+  mergeAppData,
+  restoreInto,
+  dataFingerprint,
+  sameData,
+  totalAmount,
+  normalizeTombstones,
+} from './merge'

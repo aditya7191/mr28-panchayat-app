@@ -12,6 +12,19 @@ Gist: https://gist.github.com/aditya7191/4e7214d56f96f251037fdaf8307f7697
 
 Repo mirror (read fallback): `data/db.json` on `main`.
 
+## Data safety (v2 — record-level merge)
+
+- Cloud data is **merged entry-by-entry** (by id) into the phone; it never replaces the phone's data.
+  An entry that exists only on the phone is **kept** (and uploaded once a token is set).
+- Same entry on both sides → the newer edit (`updatedAt`, else `createdAt`/`paidAt`) wins.
+- Deletes sync via deletion markers (`deleted` in db.json). "Missing from cloud" never deletes anything.
+- Counters (next member / receipt no.) = max of phone, cloud, and numbers already used.
+- Before a push the app re-reads the gist via the API (fresh, no CDN cache) and merges first,
+  so one phone can't overwrite another phone's new entries.
+- Automatic backups (last 10) are kept on the phone before any merge that changes local entries,
+  before delete/import/clear/restore, and once a day. **Settings → Restore backup** adds them back.
+- Admin screens show a GU+EN warning when the phone has no token (entries are only on this phone).
+
 ## One-time setup (admin write access)
 
 1. Open: https://github.com/settings/tokens/new?scopes=gist&description=MR28%20Panchayat%20cloud%20sync

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { IndianRupee, Plus, UserPlus, Users, AlertCircle } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { LocalOnlyWarning } from '../components/LocalOnlyWarning'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
 import {
@@ -30,6 +31,8 @@ export function Dashboard() {
           {lang === 'gu' ? settings.orgSubtitleGu : settings.orgSubtitleEn}
         </p>
       </div>
+
+      <LocalOnlyWarning />
 
       <div className="rounded-xl border-2 border-saffron bg-gradient-to-br from-saffron/15 to-saffron/5 p-4 shadow-sm">
         <div className="flex items-center gap-1.5 text-xs font-bold text-navy">

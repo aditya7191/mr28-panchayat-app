@@ -27,6 +27,8 @@ export interface Payment {
   periodTo: string // YYYY-MM-DD
   paidAt: string // ISO datetime
   notes: string
+  /** Last edit time (ISO). Optional for older records; falls back to paidAt. */
+  updatedAt?: string
 }
 
 export interface Settings {
@@ -50,7 +52,18 @@ export interface Settings {
   adminPassword: string
   /** Name shown as “Received by” on receipts (officer who collected fala). */
   receivedBy: string
+  /** When settings were last edited by an admin (ISO). Used to merge settings across devices. */
+  settingsUpdatedAt?: string
 }
+
+/** Deletion markers: record id → ISO time it was deleted. Lets deletes sync without ever
+ *  treating "missing in cloud" as "deleted". */
+export interface Tombstones {
+  members: Record<string, string>
+  payments: Record<string, string>
+}
+
+export const EMPTY_TOMBSTONES: Tombstones = { members: {}, payments: {} }
 
 export interface AppData {
   version: number
@@ -58,6 +71,8 @@ export interface AppData {
   members: Member[]
   payments: Payment[]
   exportedAt?: string
+  /** Explicit deletions (optional; older files don't have it). */
+  deleted?: Tombstones
 }
 
 export const DEFAULT_SETTINGS: Settings = {

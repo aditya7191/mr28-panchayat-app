@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DeveloperCredit } from '../components/DeveloperCredit'
+import { LocalOnlyWarning } from '../components/LocalOnlyWarning'
+import type { BackupSnapshot } from '../db'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
@@ -34,6 +36,8 @@ export function Settings() {
     lastSyncedAt,
     pullCloud,
     pushCloud,
+    listBackups,
+    restoreBackup,
   } = useStore()
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -43,13 +47,44 @@ export function Settings() {
   const [tokenInput, setTokenInput] = useState('')
   const [syncOn, setSyncOn] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [dirty, setDirty] = useState(false)
+  const [backups, setBackups] = useState<BackupSnapshot[]>([])
 
   useEffect(() => {
     setTokenInput(getSyncToken())
     setSyncOn(isCloudSyncEnabled())
   }, [])
 
+  // Keep the form in step with store settings (e.g. after a cloud merge) until the admin edits it.
+  useEffect(() => {
+    if (!dirty) setForm({ ...settings })
+  }, [settings, dirty])
+
+  const reloadBackups = useCallback(() => {
+    void listBackups().then(setBackups).catch(() => setBackups([]))
+  }, [listBackups])
+
+  useEffect(() => {
+    reloadBackups()
+  }, [reloadBackups, members, payments])
+
+  async function handleRestore(b: BackupSnapshot) {
+    const total = b.data.payments.reduce((s, p) => s + (Number(p.amount) || 0), 0)
+    const ok = confirm(
+      `બેકઅપ પાછો લાવવો છે?\n${new Date(b.at).toLocaleString()}\n` +
+        `${b.data.members.length} સભ્યો / members · ${b.data.payments.length} રસીદ / receipts · ₹${total}\n\n` +
+        'આ બેકઅપની એન્ટ્રી પાછી ઉમેરાશે; હાલની કોઈ એન્ટ્રી કાઢવામાં નહીં આવે.\n' +
+        'Entries from this backup will be added back; nothing currently on this phone is removed.',
+    )
+    if (!ok) return
+    const done = await restoreBackup(b.id)
+    setMsg(done ? 'બેકઅપ પાછો લાવ્યો / Backup restored' : t('importFail'))
+    setTimeout(() => setMsg(''), 3000)
+    reloadBackups()
+  }
+
   function patch<K extends keyof SettingsType>(key: K, value: SettingsType[K]) {
+    setDirty(true)
     setForm((f) => ({ ...f, [key]: value }))
   }
 
@@ -66,7 +101,7 @@ export function Settings() {
       }
     }
     await updateSettings(next)
-    setForm(next)
+    setDirty(false)
     setPwdConfirm('')
     setLang(next.defaultLang)
     setMsg(t('settingsSaved'))
@@ -102,7 +137,7 @@ export function Settings() {
       const text = await file.text()
       const data = JSON.parse(text) as AppData
       await importData(data)
-      setForm({ ...data.settings })
+      setDirty(false)
       setMsg(t('importSuccess'))
       setTimeout(() => setMsg(''), 2500)
     } catch {
@@ -114,9 +149,8 @@ export function Settings() {
   async function handleClear() {
     if (!confirm(t('confirmClear'))) return
     await clearData()
-    setForm({ ...settings, nextMemberCounter: 1, nextReceiptCounter: 1 })
-    // reload form from cleared defaults
-    window.location.reload()
+    setDirty(false)
+    reloadBackups()
   }
 
   const field =
@@ -127,6 +161,8 @@ export function Settings() {
   return (
     <div className="flex flex-col gap-4 pb-4">
       <h2 className="text-lg font-bold text-navy">{t('settingsTitle')}</h2>
+
+      <LocalOnlyWarning showLink={false} />
 
       {msg && (
         <p className="rounded-lg bg-success/10 px-3 py-2 text-sm font-semibold text-success">
@@ -504,9 +540,61 @@ export function Settings() {
           </button>
         </div>
         <p className="mt-2 text-[11px] text-navy/40">
-          Local cache: IndexedDB. Shared source of truth: cloud sync (GitHub gist).
-          Still export JSON as backup. / સ્થાનિક કૅશ IndexedDB; શેર ડેટા ક્લાઉડ સિંક.
+          ડેટા આ ફોનમાં (IndexedDB) સચવાય છે અને ક્લાઉડ સાથે એન્ટ્રી-દર-એન્ટ્રી મર્જ થાય છે —
+          ક્લાઉડમાં ન હોય તો પણ આ ફોનની એન્ટ્રી ક્યારેય કાઢવામાં આવતી નથી. JSON બેકઅપ પણ રાખો. /
+          Data is stored on this phone (IndexedDB) and merged entry-by-entry with the cloud — entries
+          on this phone are never removed just because the cloud lacks them. Still export JSON as backup.
         </p>
+      </section>
+
+      <section className={section}>
+        <h3 className="mb-1 text-sm font-bold text-navy">
+          ઓટો બેકઅપ / Restore backup
+        </h3>
+        <p className="mb-3 text-[11px] leading-snug text-navy/55">
+          ડેટા બદલાય (ક્લાઉડ મર્જ, ડિલીટ, ઇમ્પોર્ટ) તે પહેલાં અને રોજ એક વાર આ ફોનમાં આપમેળે
+          બેકઅપ લેવાય છે (છેલ્લા 10). Restore કરવાથી બેકઅપની એન્ટ્રી પાછી ઉમેરાય છે; હાલની કંઈ કાઢતું નથી. /
+          Automatic snapshots are saved on this phone before data changes (cloud merge, delete,
+          import) and once a day (last 10). Restore adds the backup&apos;s entries back; it removes nothing.
+        </p>
+        {backups.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-navy/20 p-3 text-center text-[12px] text-navy/50">
+            હજુ કોઈ બેકઅપ નથી / No backups yet
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {backups.map((b) => {
+              const total = b.data.payments.reduce(
+                (sum, p) => sum + (Number(p.amount) || 0),
+                0,
+              )
+              return (
+                <li
+                  key={b.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-navy/10 bg-cream/40 px-3 py-2"
+                >
+                  <div className="min-w-0 text-[11px] text-navy/70">
+                    <p className="font-semibold text-navy">
+                      {new Date(b.at).toLocaleString()}
+                    </p>
+                    <p>
+                      {b.data.members.length} સભ્યો/members · {b.data.payments.length}{' '}
+                      રસીદ/receipts · ₹{total}
+                    </p>
+                    <p className="text-navy/40">{b.reason}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRestore(b)}
+                    className="shrink-0 rounded-lg border border-saffron/50 bg-saffron/10 px-3 py-1.5 text-[12px] font-semibold text-saffron-dark"
+                  >
+                    Restore
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>
 
       <DeveloperCredit className="pt-1" />

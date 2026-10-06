@@ -1,4 +1,5 @@
-import type { AppData, Settings } from '../types'
+import type { AppData, Settings, Tombstones } from '../types'
+import { normalizeTombstones } from './merge'
 import { DEFAULT_SETTINGS } from '../types'
 import {
   getSyncToken,
@@ -36,27 +37,8 @@ export function sanitizeForCloud(data: AppData): AppData {
     settings,
     members: Array.isArray(data.members) ? data.members : [],
     payments: Array.isArray(data.payments) ? data.payments : [],
+    deleted: normalizeTombstones(data.deleted),
     exportedAt: data.exportedAt || new Date().toISOString(),
-  }
-}
-
-export function mergeRemoteWithLocalPassword(
-  remote: AppData,
-  localPassword: string,
-): AppData {
-  const remotePwd = remote.settings?.adminPassword?.trim()
-  const settings: Settings = {
-    ...DEFAULT_SETTINGS,
-    ...remote.settings,
-    adminPassword:
-      localPassword || remotePwd || DEFAULT_SETTINGS.adminPassword,
-  }
-  return {
-    version: remote.version || 1,
-    settings,
-    members: Array.isArray(remote.members) ? remote.members : [],
-    payments: Array.isArray(remote.payments) ? remote.payments : [],
-    exportedAt: remote.exportedAt,
   }
 }
 
@@ -72,6 +54,7 @@ function parseAppData(json: unknown): AppData | null {
       ? (o.payments as AppData['payments'])
       : [],
     exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : undefined,
+    deleted: normalizeTombstones(o.deleted as Tombstones | undefined),
   }
 }
 
@@ -133,6 +116,56 @@ export async function pullCloudData(): Promise<SyncResult> {
   }
 
   return { ok: false, error: 'Invalid cloud data', source: 'none' }
+}
+
+/**
+ * Fresh read straight from the GitHub API (no CDN cache), using the admin token.
+ * Used right before a push so we merge with the real latest cloud copy and never
+ * overwrite entries that another phone just uploaded.
+ */
+export async function pullCloudDataFresh(): Promise<SyncResult> {
+  const token = getSyncToken()
+  if (!token) return pullCloudData()
+  try {
+    const res = await fetchWithTimeout(gistApiUrl(), {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    })
+    if (res.status === 401 || res.status === 403) {
+      return {
+        ok: false,
+        error:
+          'Token rejected — create a classic PAT with the gist scope and paste it in Settings',
+        source: 'gist',
+      }
+    }
+    if (!res.ok) throw new Error(`GitHub ${res.status}`)
+    const j = (await res.json()) as {
+      files?: Record<string, { content?: string; truncated?: boolean; raw_url?: string }>
+    }
+    const f = j.files?.[SYNC_GIST_FILENAME]
+    if (!f) return { ok: false, error: 'db.json missing in gist', source: 'gist' }
+    let text = f.content || ''
+    if (f.truncated && f.raw_url) {
+      const r = await fetchWithTimeout(f.raw_url, { cache: 'no-store' })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      text = await r.text()
+    }
+    const data = parseAppData(JSON.parse(text))
+    if (!data) return { ok: false, error: 'Invalid cloud data', source: 'gist' }
+    return { ok: true, data, source: 'gist' }
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'Pull failed',
+      source: 'gist',
+    }
+  }
 }
 
 /**
@@ -204,19 +237,4 @@ export async function pushCloudData(data: AppData): Promise<SyncResult> {
 
 export function canPush(): boolean {
   return isCloudSyncEnabled() && Boolean(getSyncToken())
-}
-
-/** Prefer remote when it has a newer exportedAt, or when local has no members but remote does. */
-export function shouldPreferRemote(local: AppData, remote: AppData): boolean {
-  const localAt = local.exportedAt || ''
-  const remoteAt = remote.exportedAt || ''
-  if (remoteAt && remoteAt > localAt) return true
-  if (
-    (local.members?.length || 0) === 0 &&
-    (remote.members?.length || 0) > 0
-  ) {
-    return true
-  }
-  if (!localAt && remoteAt) return true
-  return false
 }
