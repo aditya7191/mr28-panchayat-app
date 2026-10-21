@@ -158,7 +158,16 @@ export function Settings() {
 
   async function handleClear() {
     if (!confirm(t('confirmClear'))) return
+    const pw = prompt(
+      'પુષ્ટિ માટે એડમિન પાસવર્ડ લખો / Re-enter admin password to confirm reset',
+    )
+    if (pw === null) return
+    if (pw !== (settings.adminPassword || 'aditya@1989')) {
+      alert('ખોટો પાસવર્ડ — કંઈ કાઢ્યું નથી / Wrong password — nothing was deleted')
+      return
+    }
     await clearData()
+    setMsg('બધો ડેટા કાઢ્યો (બેકઅપ લીધો) / All data reset (backup saved)')
     setDirty(false)
     reloadBackups()
   }

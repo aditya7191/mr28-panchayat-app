@@ -103,6 +103,20 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
   const rAt = rs.settingsUpdatedAt || ''
   const base: Settings = rAt > lAt ? { ...rs } : { ...ls }
 
+  // Admin reset epoch: anything from before the newest reset is dropped on every device.
+  const lReset = ls.resetAt || ''
+  const rReset = rs.resetAt || ''
+  const resetAt = lReset > rReset ? lReset : rReset
+  const localCurrent = lReset === resetAt
+  const remoteCurrent = rReset === resetAt
+  if (resetAt && !localCurrent) Object.assign(base, rs)
+  const afterReset = <T,>(arr: T[], time: (r: T) => string): T[] =>
+    resetAt ? arr.filter((r) => time(r) > resetAt) : arr
+  const lMembers = afterReset(Array.isArray(local.members) ? local.members : [], memberTime)
+  const rMembers = afterReset(Array.isArray(remote.members) ? remote.members : [], memberTime)
+  const lPayments = afterReset(Array.isArray(local.payments) ? local.payments : [], paymentTime)
+  const rPayments = afterReset(Array.isArray(remote.payments) ? remote.payments : [], paymentTime)
+
   const deleted: Tombstones = {
     members: mergeTombMap(
       normalizeTombstones(local.deleted).members,
@@ -115,15 +129,15 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
   }
 
   const members = mergeRecords(
-    Array.isArray(local.members) ? local.members : [],
-    Array.isArray(remote.members) ? remote.members : [],
+    lMembers,
+    rMembers,
     memberTime,
     deleted.members,
   )
   const payments = sortPayments(
     mergeRecords(
-      Array.isArray(local.payments) ? local.payments : [],
-      Array.isArray(remote.payments) ? remote.payments : [],
+      lPayments,
+      rPayments,
       paymentTime,
       deleted.payments,
     ),
@@ -131,25 +145,26 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
 
   // Counters never go backwards and never reuse a number already issued.
   const usedMember = maxUsedCounter([
-    ...(local.members || []).map((m) => m.membershipNo),
-    ...(remote.members || []).map((m) => m.membershipNo),
+    ...lMembers.map((m) => m.membershipNo),
+    ...rMembers.map((m) => m.membershipNo),
   ])
   const usedReceipt = maxUsedCounter([
-    ...(local.payments || []).map((p) => p.receiptNo),
-    ...(remote.payments || []).map((p) => p.receiptNo),
+    ...lPayments.map((p) => p.receiptNo),
+    ...rPayments.map((p) => p.receiptNo),
   ])
   const settings: Settings = {
     ...base,
     nextMemberCounter: Math.max(
-      ls.nextMemberCounter || 1,
-      rs.nextMemberCounter || 1,
+      localCurrent ? ls.nextMemberCounter || 1 : 1,
+      remoteCurrent ? rs.nextMemberCounter || 1 : 1,
       usedMember + 1,
     ),
     nextReceiptCounter: Math.max(
-      ls.nextReceiptCounter || 1,
-      rs.nextReceiptCounter || 1,
+      localCurrent ? ls.nextReceiptCounter || 1 : 1,
+      remoteCurrent ? rs.nextReceiptCounter || 1 : 1,
       usedReceipt + 1,
     ),
+    ...(resetAt ? { resetAt } : {}),
     // Admin password stays on this phone only.
     adminPassword: ls.adminPassword || DEFAULT_SETTINGS.adminPassword,
   }
@@ -218,6 +233,7 @@ export function dataFingerprint(d: AppData): string {
     s.nextMemberCounter,
     s.nextReceiptCounter,
     s.settingsUpdatedAt || '',
+    s.resetAt || '',
   ])
 }
 

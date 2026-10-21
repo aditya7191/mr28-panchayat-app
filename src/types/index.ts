@@ -54,6 +54,9 @@ export interface Settings {
   receivedBy: string
   /** When settings were last edited by an admin (ISO). Used to merge settings across devices. */
   settingsUpdatedAt?: string
+  /** Time of the last admin "Reset all data" (ISO). Devices with data/counters from before
+   *  this time drop them when they sync, so a reset reaches every phone. */
+  resetAt?: string
 }
 
 /** Deletion markers: record id → ISO time it was deleted. Lets deletes sync without ever

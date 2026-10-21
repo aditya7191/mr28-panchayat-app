@@ -557,9 +557,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   )
 
-  /** Clear: snapshot first, then mark everything as deleted (so it is restorable). */
+  /** Reset all data (admin): snapshot first, tombstone everything, counters back to 1,
+   *  and stamp resetAt so every other phone also drops its old entries/counters on sync. */
   const clearData = useCallback(async () => {
-    await mutate('before-clear', (cur) => {
+    await mutate('before-reset', (cur) => {
       const now = new Date().toISOString()
       const deleted = normalizeTombstones(cur.deleted)
       for (const m of cur.members) deleted.members[m.id] = now
@@ -571,11 +572,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           members: [],
           payments: [],
           settings: {
-            ...DEFAULT_SETTINGS,
-            adminPassword: cur.settings.adminPassword,
-            nextMemberCounter: cur.settings.nextMemberCounter,
-            nextReceiptCounter: cur.settings.nextReceiptCounter,
+            ...cur.settings,
+            nextMemberCounter: 1,
+            nextReceiptCounter: 1,
             settingsUpdatedAt: now,
+            resetAt: now,
           },
         },
         undefined,
