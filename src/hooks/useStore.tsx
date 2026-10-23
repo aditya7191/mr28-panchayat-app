@@ -18,6 +18,8 @@ import {
 import {
   DEFAULT_SETTINGS,
   type AppData,
+  type Expense,
+  type ExpenseCategory,
   type FeePlan,
   type Member,
   type Payment,
@@ -46,12 +48,31 @@ import {
   sameData,
   type SyncStatus,
 } from '../sync'
+import { makeVoucherNo } from '../utils/accounts'
+import { addBill, uploadPendingBills } from '../utils/bills'
+import { getPendingBills } from '../db'
+
+export interface ExpenseInput {
+  date: string
+  amountPaise: number
+  category: ExpenseCategory
+  categoryOther: string
+  description: string
+  paidTo: string
+  paidBy: string
+  method: PaymentMethod
+  billIds: string[]
+  /** New images (id → data URL) to store on this phone and upload. */
+  newBills?: Record<string, string>
+}
 
 interface StoreCtx {
   ready: boolean
   settings: Settings
   members: Member[]
   payments: Payment[]
+  expenses: Expense[]
+  pendingBillCount: number
   syncStatus: SyncStatus
   syncError: string
   lastSyncedAt: string | null
@@ -79,6 +100,9 @@ interface StoreCtx {
     notes: string
   }) => Promise<Payment>
   deletePayment: (id: string) => Promise<void>
+  addExpense: (input: ExpenseInput) => Promise<Expense>
+  updateExpense: (id: string, input: ExpenseInput) => Promise<void>
+  deleteExpense: (id: string) => Promise<void>
   exportData: () => Promise<AppData>
   importData: (data: AppData) => Promise<void>
   clearData: () => Promise<void>
@@ -113,10 +137,15 @@ function mergeLosesLocal(local: AppData, merged: AppData): boolean {
   for (const p of local.payments) {
     if (pm.get(p.id) !== JSON.stringify(p)) return true
   }
+  const em = new Map((merged.expenses || []).map((e) => [e.id, JSON.stringify(e)]))
+  for (const e of local.expenses || []) {
+    if (em.get(e.id) !== JSON.stringify(e)) return true
+  }
   const strip = (s: Settings) => ({
     ...s,
     nextMemberCounter: 0,
     nextReceiptCounter: 0,
+    nextExpenseCounter: 0,
   })
   return JSON.stringify(strip(local.settings)) !== JSON.stringify(strip(merged.settings))
 }
@@ -134,10 +163,16 @@ function countUnsynced(local: AppData, cloud: AppData): number {
     const t = cp.get(p.id)
     if (t === undefined || (p.updatedAt || p.paidAt || '') > t) n++
   }
+  const ce = new Map((cloud.expenses || []).map((e) => [e.id, e.updatedAt || e.createdAt || '']))
+  for (const e of local.expenses || []) {
+    const t = ce.get(e.id)
+    if (t === undefined || (e.updatedAt || e.createdAt || '') > t) n++
+  }
   const cd = normalizeTombstones(cloud.deleted)
   const ld = normalizeTombstones(local.deleted)
   for (const id of Object.keys(ld.members)) if (!cd.members[id]) n++
   for (const id of Object.keys(ld.payments)) if (!cd.payments[id]) n++
+  for (const id of Object.keys(ld.expenses)) if (!cd.expenses[id]) n++
   return n
 }
 
@@ -146,7 +181,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
-  const [, setDeleted] = useState<Tombstones>({ members: {}, payments: {} })
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [pendingBillCount, setPendingBillCount] = useState(0)
+  const [, setDeleted] = useState<Tombstones>({ members: {}, payments: {}, expenses: {} })
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [syncError, setSyncError] = useState('')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
@@ -168,6 +205,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSettings(d.settings)
     setMembers(d.members)
     setPayments(d.payments)
+    setExpenses(d.expenses || [])
     setDeleted(normalizeTombstones(d.deleted))
     if (lastCloudRef.current) {
       setUnsyncedCount(countUnsynced(d, lastCloudRef.current))
@@ -211,6 +249,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
         lastCloudRef.current = remote
         applyState(merged)
+
+        // Upload bill images first so db.json never points to a missing image.
+        if (writable) {
+          const left = await uploadPendingBills()
+          setPendingBillCount(left)
+        } else {
+          setPendingBillCount((await getPendingBills()).length)
+        }
 
         if (writable && countUnsynced(merged, remote) > 0) {
           setSyncStatus('pushing')
@@ -375,6 +421,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             Number(s.nextReceiptCounter) || 1,
             maxUsed(cur.payments.map((p) => p.receiptNo)) + 1,
           ),
+          nextExpenseCounter: Math.max(
+            Number(s.nextExpenseCounter) || 1,
+            cur.settings.nextExpenseCounter || 1,
+            maxUsed((cur.expenses || []).map((e) => e.voucherNo)) + 1,
+          ),
         }
         return [{ ...cur, settings: next }, undefined]
       })
@@ -530,6 +581,93 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   )
 
+  const storeBills = useCallback(async (bills?: Record<string, string>) => {
+    if (!bills) return
+    for (const [id, data] of Object.entries(bills)) await addBill(id, data)
+    setPendingBillCount((await getPendingBills()).length)
+  }, [])
+
+  const cleanExpense = (input: ExpenseInput) => {
+    const amt = Math.round(Number(input.amountPaise))
+    if (!Number.isFinite(amt) || amt <= 0) throw new Error('Invalid amount')
+    return {
+      date: input.date,
+      amountPaise: amt,
+      category: input.category,
+      categoryOther: input.categoryOther.trim(),
+      description: input.description.trim(),
+      paidTo: input.paidTo.trim(),
+      paidBy: input.paidBy.trim(),
+      method: input.method,
+      billIds: [...input.billIds],
+    }
+  }
+
+  const addExpense = useCallback(
+    async (input: ExpenseInput) => {
+      const clean = cleanExpense(input)
+      await storeBills(input.newBills)
+      return mutate(null, (cur) => {
+        const s = cur.settings
+        const list = cur.expenses || []
+        const counter = Math.max(
+          s.nextExpenseCounter || 1,
+          maxUsed(list.map((e) => e.voucherNo)) + 1,
+        )
+        const now = new Date().toISOString()
+        const exp: Expense = {
+          id: uid(),
+          voucherNo: makeVoucherNo(counter),
+          ...clean,
+          createdAt: now,
+          updatedAt: now,
+        }
+        return [
+          {
+            ...cur,
+            expenses: [exp, ...list],
+            settings: { ...s, nextExpenseCounter: counter + 1 },
+          },
+          exp,
+        ]
+      })
+    },
+    [mutate, storeBills],
+  )
+
+  const updateExpense = useCallback(
+    async (id: string, input: ExpenseInput) => {
+      const clean = cleanExpense(input)
+      await storeBills(input.newBills)
+      await mutate('before-edit-expense', (cur) => [
+        {
+          ...cur,
+          expenses: (cur.expenses || []).map((e) =>
+            e.id === id
+              ? { ...e, ...clean, id: e.id, voucherNo: e.voucherNo, updatedAt: new Date().toISOString() }
+              : e,
+          ),
+        },
+        undefined,
+      ])
+    },
+    [mutate, storeBills],
+  )
+
+  const deleteExpense = useCallback(
+    async (id: string) => {
+      await mutate('before-delete-expense', (cur) => {
+        const deleted = normalizeTombstones(cur.deleted)
+        deleted.expenses[id] = new Date().toISOString()
+        return [
+          { ...cur, deleted, expenses: (cur.expenses || []).filter((e) => e.id !== id) },
+          undefined,
+        ]
+      })
+    },
+    [mutate],
+  )
+
   const exportData = useCallback(async () => {
     const d = await withLock(() => loadAll())
     return { ...d, exportedAt: new Date().toISOString() }
@@ -565,16 +703,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const deleted = normalizeTombstones(cur.deleted)
       for (const m of cur.members) deleted.members[m.id] = now
       for (const p of cur.payments) deleted.payments[p.id] = now
+      for (const e of cur.expenses || []) deleted.expenses[e.id] = now
       return [
         {
           ...cur,
           deleted,
           members: [],
           payments: [],
+          expenses: [],
           settings: {
             ...cur.settings,
             nextMemberCounter: 1,
             nextReceiptCounter: 1,
+            nextExpenseCounter: 1,
             settingsUpdatedAt: now,
             resetAt: now,
           },
@@ -596,6 +737,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       settings,
       members,
       payments,
+      expenses,
+      pendingBillCount,
       syncStatus,
       syncError,
       lastSyncedAt,
@@ -606,6 +749,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteMember,
       addPayment,
       deletePayment,
+      addExpense,
+      updateExpense,
+      deleteExpense,
       exportData,
       importData,
       clearData,
@@ -621,6 +767,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     settings,
     members,
     payments,
+    expenses,
+    pendingBillCount,
     syncStatus,
     syncError,
     lastSyncedAt,
@@ -631,6 +779,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteMember,
     addPayment,
     deletePayment,
+    addExpense,
+    updateExpense,
+    deleteExpense,
     exportData,
     importData,
     clearData,

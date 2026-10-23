@@ -8,6 +8,9 @@ import {
   isCloudSyncEnabled,
   repoRawUrl,
   SYNC_GIST_FILENAME,
+  billFileName,
+  billRawUrl,
+  billsGistApiUrl,
 } from './config'
 
 export type SyncStatus =
@@ -37,6 +40,7 @@ export function sanitizeForCloud(data: AppData): AppData {
     settings,
     members: Array.isArray(data.members) ? data.members : [],
     payments: Array.isArray(data.payments) ? data.payments : [],
+    expenses: Array.isArray(data.expenses) ? data.expenses : [],
     deleted: normalizeTombstones(data.deleted),
     exportedAt: data.exportedAt || new Date().toISOString(),
   }
@@ -52,6 +56,9 @@ function parseAppData(json: unknown): AppData | null {
     members: Array.isArray(o.members) ? (o.members as AppData['members']) : [],
     payments: Array.isArray(o.payments)
       ? (o.payments as AppData['payments'])
+      : [],
+    expenses: Array.isArray(o.expenses)
+      ? (o.expenses as NonNullable<AppData['expenses']>)
       : [],
     exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : undefined,
     deleted: normalizeTombstones(o.deleted as Tombstones | undefined),
@@ -237,4 +244,41 @@ export async function pushCloudData(data: AppData): Promise<SyncResult> {
 
 export function canPush(): boolean {
   return isCloudSyncEnabled() && Boolean(getSyncToken())
+}
+
+// ---------- Bill images: one file per image (bill-<id>.txt) in a separate public gist ----------
+
+export async function uploadBillFile(id: string, dataUrl: string): Promise<boolean> {
+  const token = getSyncToken()
+  if (!token) return false
+  try {
+    const res = await fetchWithTimeout(
+      billsGistApiUrl(),
+      {
+        method: 'PATCH',
+        headers: {
+          Accept: 'application/vnd.github+json',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: JSON.stringify({ files: { [billFileName(id)]: { content: dataUrl } } }),
+      },
+      30000,
+    )
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+export async function fetchBillFile(id: string): Promise<string | null> {
+  try {
+    const res = await fetchWithTimeout(billRawUrl(id), { cache: 'no-store' }, 15000)
+    if (!res.ok) return null
+    const text = (await res.text()).trim()
+    return text.startsWith('data:image/') ? text : null
+  } catch {
+    return null
+  }
 }

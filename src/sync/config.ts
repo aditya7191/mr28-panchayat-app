@@ -14,6 +14,22 @@ export function gistApiUrl(): string {
   return `https://api.github.com/gists/${SYNC_GIST_ID}`
 }
 
+/** Separate public gist that holds bill/screenshot images, one file per image, so db.json
+ *  stays small and fast. */
+export const BILLS_GIST_ID = '95e5e298dff560608fd651f2af0d9c88'
+
+export function billFileName(id: string): string {
+  return `bill-${id}.txt`
+}
+
+export function billRawUrl(id: string): string {
+  return `https://gist.githubusercontent.com/${SYNC_GIST_OWNER}/${BILLS_GIST_ID}/raw/${billFileName(id)}?t=${Date.now()}`
+}
+
+export function billsGistApiUrl(): string {
+  return `https://api.github.com/gists/${BILLS_GIST_ID}`
+}
+
 /** Fallback: repo file on main (public read). */
 export const SYNC_REPO = {
   owner: 'aditya7191',

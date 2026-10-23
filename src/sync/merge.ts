@@ -13,6 +13,7 @@
 import {
   DEFAULT_SETTINGS,
   type AppData,
+  type Expense,
   type Member,
   type Payment,
   type Settings,
@@ -27,11 +28,25 @@ export function paymentTime(p: Payment): string {
   return p.updatedAt || p.paidAt || ''
 }
 
+export function expenseTime(e: Expense): string {
+  return e.updatedAt || e.createdAt || ''
+}
+
 export function normalizeTombstones(t?: Partial<Tombstones> | null): Tombstones {
   return {
     members: { ...(t?.members || {}) },
     payments: { ...(t?.payments || {}) },
+    expenses: { ...(t?.expenses || {}) },
   }
+}
+
+/** Newest-first by date, then creation time. */
+export function sortExpenses(expenses: Expense[]): Expense[] {
+  return [...expenses].sort(
+    (a, b) =>
+      (b.date || '').localeCompare(a.date || '') ||
+      (b.createdAt || '').localeCompare(a.createdAt || ''),
+  )
 }
 
 function mergeTombMap(
@@ -116,6 +131,8 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
   const rMembers = afterReset(Array.isArray(remote.members) ? remote.members : [], memberTime)
   const lPayments = afterReset(Array.isArray(local.payments) ? local.payments : [], paymentTime)
   const rPayments = afterReset(Array.isArray(remote.payments) ? remote.payments : [], paymentTime)
+  const lExpenses = afterReset(Array.isArray(local.expenses) ? local.expenses : [], expenseTime)
+  const rExpenses = afterReset(Array.isArray(remote.expenses) ? remote.expenses : [], expenseTime)
 
   const deleted: Tombstones = {
     members: mergeTombMap(
@@ -125,6 +142,10 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     payments: mergeTombMap(
       normalizeTombstones(local.deleted).payments,
       normalizeTombstones(remote.deleted).payments,
+    ),
+    expenses: mergeTombMap(
+      normalizeTombstones(local.deleted).expenses,
+      normalizeTombstones(remote.deleted).expenses,
     ),
   }
 
@@ -143,6 +164,10 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     ),
   )
 
+  const expenses = sortExpenses(
+    mergeRecords(lExpenses, rExpenses, expenseTime, deleted.expenses),
+  )
+
   // Counters never go backwards and never reuse a number already issued.
   const usedMember = maxUsedCounter([
     ...lMembers.map((m) => m.membershipNo),
@@ -152,8 +177,17 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     ...lPayments.map((p) => p.receiptNo),
     ...rPayments.map((p) => p.receiptNo),
   ])
+  const usedExpense = maxUsedCounter([
+    ...lExpenses.map((e) => e.voucherNo),
+    ...rExpenses.map((e) => e.voucherNo),
+  ])
   const settings: Settings = {
     ...base,
+    nextExpenseCounter: Math.max(
+      localCurrent ? ls.nextExpenseCounter || 1 : 1,
+      remoteCurrent ? rs.nextExpenseCounter || 1 : 1,
+      usedExpense + 1,
+    ),
     nextMemberCounter: Math.max(
       localCurrent ? ls.nextMemberCounter || 1 : 1,
       remoteCurrent ? rs.nextMemberCounter || 1 : 1,
@@ -174,6 +208,7 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     settings,
     members,
     payments,
+    expenses,
     deleted,
     exportedAt: remote.exportedAt || local.exportedAt,
   }
@@ -199,12 +234,19 @@ export function restoreInto(current: AppData, backup: AppData): AppData {
       return { ...p, updatedAt: now }
     },
   )
+  const bExpenses = (Array.isArray(backup.expenses) ? backup.expenses : []).map(
+    (e) => {
+      delete deleted.expenses[e.id]
+      return { ...e, updatedAt: now }
+    },
+  )
   const merged = mergeAppData(
     { ...current, deleted },
     {
       ...current,
       members: bMembers,
       payments: bPayments,
+      expenses: bExpenses,
       deleted,
       settings: {
         ...current.settings,
@@ -215,6 +257,10 @@ export function restoreInto(current: AppData, backup: AppData): AppData {
         nextReceiptCounter: Math.max(
           current.settings.nextReceiptCounter || 1,
           backup.settings?.nextReceiptCounter || 1,
+        ),
+        nextExpenseCounter: Math.max(
+          current.settings.nextExpenseCounter || 1,
+          backup.settings?.nextExpenseCounter || 1,
         ),
       },
     },
@@ -230,8 +276,11 @@ export function dataFingerprint(d: AppData): string {
     (d.payments || []).map((p) => [p.id, paymentTime(p), p.amount]).sort(),
     Object.keys(d.deleted?.members || {}).sort(),
     Object.keys(d.deleted?.payments || {}).sort(),
+    (d.expenses || []).map((e) => [e.id, expenseTime(e), e.amountPaise]).sort(),
+    Object.keys(d.deleted?.expenses || {}).sort(),
     s.nextMemberCounter,
     s.nextReceiptCounter,
+    s.nextExpenseCounter || 1,
     s.settingsUpdatedAt || '',
     s.resetAt || '',
   ])
@@ -240,8 +289,8 @@ export function dataFingerprint(d: AppData): string {
 /** Full equality of the parts that are stored locally. */
 export function sameData(a: AppData, b: AppData): boolean {
   return (
-    JSON.stringify([a.settings, a.members, a.payments, normalizeTombstones(a.deleted)]) ===
-    JSON.stringify([b.settings, b.members, b.payments, normalizeTombstones(b.deleted)])
+    JSON.stringify([a.settings, a.members, a.payments, a.expenses || [], normalizeTombstones(a.deleted)]) ===
+    JSON.stringify([b.settings, b.members, b.payments, b.expenses || [], normalizeTombstones(b.deleted)])
   )
 }
 

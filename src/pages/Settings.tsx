@@ -31,6 +31,7 @@ export function Settings() {
     clearData,
     members,
     payments,
+    expenses,
     syncStatus,
     syncError,
     lastSyncedAt,
@@ -134,12 +135,12 @@ export function Settings() {
 
   async function handleExportExcel() {
     const { downloadExcelBackup } = await import('../utils/backupExport')
-    downloadExcelBackup(members, payments)
+    downloadExcelBackup(members, payments, expenses)
   }
 
   async function handleExportPdf() {
     const { downloadPdfBackup } = await import('../utils/backupExport')
-    downloadPdfBackup(settings, members, payments)
+    downloadPdfBackup(settings, members, payments, expenses)
   }
 
   async function handleImport(file: File) {

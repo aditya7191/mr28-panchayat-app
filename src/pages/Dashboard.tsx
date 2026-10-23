@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { IndianRupee, Plus, UserPlus, Users, AlertCircle } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { HisabSummary } from '../components/HisabSummary'
 import { LocalOnlyWarning } from '../components/LocalOnlyWarning'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
@@ -47,6 +48,8 @@ export function Dashboard() {
         </p>
       </div>
 
+      <HisabSummary />
+
       <div className="grid grid-cols-2 gap-2.5">
         <StatCard
           label={t('totalMembers')}
@@ -90,6 +93,14 @@ export function Dashboard() {
         >
           <Plus size={18} />
           {t('quickRecordPayment')}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/expenses?add=1')}
+          className="col-span-2 flex items-center justify-center gap-2 rounded-xl border-2 border-danger/40 bg-white py-3 text-sm font-semibold text-danger"
+        >
+          <Plus size={18} />
+          {t('addExpense')}
         </button>
       </div>
 

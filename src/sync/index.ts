@@ -12,6 +12,8 @@ export {
   pullCloudDataFresh,
   pushCloudData,
   canPush,
+  uploadBillFile,
+  fetchBillFile,
   sanitizeForCloud,
   type SyncResult,
   type SyncStatus,

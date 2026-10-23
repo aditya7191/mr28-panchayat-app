@@ -6,6 +6,7 @@ import {
   LogOut,
   Settings,
   Users,
+  Wallet,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../hooks/useI18n'
@@ -17,6 +18,7 @@ const nav = [
   { to: '/', icon: Home, label: 'navDashboard' as const, end: true },
   { to: '/members', icon: Users, label: 'navMembers' as const },
   { to: '/payments', icon: CreditCard, label: 'navPayments' as const },
+  { to: '/expenses', icon: Wallet, label: 'navExpenses' as const },
   { to: '/reminders', icon: Bell, label: 'navReminders' as const },
   { to: '/settings', icon: Settings, label: 'navSettings' as const },
 ]

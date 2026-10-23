@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, IndianRupee, Search, Users } from 'lucide-react'
 import { DeveloperCredit } from '../components/DeveloperCredit'
+import { ExpenseList } from '../components/ExpenseList'
+import { HisabSummary } from '../components/HisabSummary'
 import { Watermark } from '../components/Watermark'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
@@ -23,7 +25,7 @@ function latestPaymentFor(
 
 export function PublicHome() {
   const { t, lang, toggle } = useI18n()
-  const { settings, members, payments } = useStore()
+  const { settings, members, payments, expenses } = useStore()
   const [q, setQ] = useState('')
 
   const publicMembers = useMemo(() => {
@@ -103,6 +105,13 @@ export function PublicHome() {
           <p className="mt-1 text-[10px] text-navy/45">
             {payments.length} રસીદ / receipts
           </p>
+        </section>
+
+        <HisabSummary />
+
+        <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-bold text-navy">{t('publicExpenses')}</h3>
+          <ExpenseList expenses={expenses} />
         </section>
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">

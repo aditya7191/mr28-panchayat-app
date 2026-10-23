@@ -1,12 +1,21 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { AppData, Member, Payment, Settings, Tombstones } from '../types'
+import type { AppData, Expense, Member, Payment, Settings, Tombstones } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 
 const DB_NAME = 'mr28-panchayat'
 const DB_VERSION = 1
 const STORE = 'kv'
 
-type KvValue = Settings | Member[] | Payment[] | number | Tombstones | BackupSnapshot[]
+type KvValue =
+  | Settings
+  | Member[]
+  | Payment[]
+  | Expense[]
+  | number
+  | string
+  | string[]
+  | Tombstones
+  | BackupSnapshot[]
 
 export interface BackupSnapshot {
   id: string
@@ -67,18 +76,45 @@ export async function savePayments(payments: Payment[]): Promise<void> {
 
 export async function loadDeleted(): Promise<Tombstones> {
   const t = await get<Tombstones>('deleted')
-  return { members: { ...(t?.members || {}) }, payments: { ...(t?.payments || {}) } }
+  return {
+    members: { ...(t?.members || {}) },
+    payments: { ...(t?.payments || {}) },
+    expenses: { ...(t?.expenses || {}) },
+  }
+}
+
+export async function loadExpenses(): Promise<Expense[]> {
+  return (await get<Expense[]>('expenses')) ?? []
+}
+
+// ---------- Bill images (kept on this phone; uploaded to the bills gist) ----------
+
+export async function getLocalBill(id: string): Promise<string | undefined> {
+  return get<string>(`bill:${id}`)
+}
+
+export async function putLocalBill(id: string, dataUrl: string): Promise<void> {
+  await set(`bill:${id}`, dataUrl)
+}
+
+export async function getPendingBills(): Promise<string[]> {
+  return (await get<string[]>('pendingBills')) ?? []
+}
+
+export async function setPendingBills(ids: string[]): Promise<void> {
+  await set('pendingBills', ids)
 }
 
 /** Read everything stored on this phone. */
 export async function loadAll(): Promise<AppData> {
-  const [settings, members, payments, deleted] = await Promise.all([
+  const [settings, members, payments, expenses, deleted] = await Promise.all([
     loadSettings(),
     loadMembers(),
     loadPayments(),
+    loadExpenses(),
     loadDeleted(),
   ])
-  return { version: 1, settings, members, payments, deleted }
+  return { version: 1, settings, members, payments, expenses, deleted }
 }
 
 /** Write settings + members + payments + deletion markers in ONE transaction (all or nothing). */
@@ -90,10 +126,12 @@ export async function saveAll(data: AppData): Promise<void> {
     st.put({ ...DEFAULT_SETTINGS, ...(data.settings || {}) }, 'settings'),
     st.put(Array.isArray(data.members) ? data.members : [], 'members'),
     st.put(Array.isArray(data.payments) ? data.payments : [], 'payments'),
+    st.put(Array.isArray(data.expenses) ? data.expenses : [], 'expenses'),
     st.put(
       {
         members: { ...(data.deleted?.members || {}) },
         payments: { ...(data.deleted?.payments || {}) },
+        expenses: { ...(data.deleted?.expenses || {}) },
       },
       'deleted',
     ),
@@ -154,13 +192,15 @@ export async function addBackup(
 ): Promise<void> {
   const members = Array.isArray(data.members) ? data.members : []
   const payments = Array.isArray(data.payments) ? data.payments : []
-  if (members.length === 0 && payments.length === 0) return
+  const expenses = Array.isArray(data.expenses) ? data.expenses : []
+  if (members.length === 0 && payments.length === 0 && expenses.length === 0) return
   const list = await listBackups()
   const snap: AppData = {
     version: 1,
     settings: { ...data.settings, adminPassword: '' },
     members,
     payments,
+    expenses,
     deleted: data.deleted,
     exportedAt: new Date().toISOString(),
   }

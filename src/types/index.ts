@@ -31,6 +31,25 @@ export interface Payment {
   updatedAt?: string
 }
 
+export type ExpenseCategory = 'program' | 'help' | 'material' | 'rent' | 'other'
+
+/** Kharcha (expense) entry. Amount is stored in integer PAISE to avoid float errors. */
+export interface Expense {
+  id: string
+  voucherNo: string // MR28-E-0001
+  date: string // YYYY-MM-DD
+  amountPaise: number // integer paise (₹1 = 100)
+  category: ExpenseCategory
+  categoryOther: string // free text (used for 'other' or extra detail)
+  description: string // where / what it was spent on
+  paidTo: string
+  paidBy: string
+  method: PaymentMethod
+  billIds: string[] // images stored in the bills gist as bill-<id>.txt
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Settings {
   orgNameGu: string
   orgNameEn: string
@@ -41,6 +60,8 @@ export interface Settings {
   yearlyFee: number
   nextMemberCounter: number
   nextReceiptCounter: number
+  /** Next expense voucher number (MR28-E-####). Optional for older data. */
+  nextExpenseCounter?: number
   defaultLang: Lang
   upiId: string
   bankDetails: string
@@ -64,15 +85,18 @@ export interface Settings {
 export interface Tombstones {
   members: Record<string, string>
   payments: Record<string, string>
+  expenses: Record<string, string>
 }
 
-export const EMPTY_TOMBSTONES: Tombstones = { members: {}, payments: {} }
+export const EMPTY_TOMBSTONES: Tombstones = { members: {}, payments: {}, expenses: {} }
 
 export interface AppData {
   version: number
   settings: Settings
   members: Member[]
   payments: Payment[]
+  /** Kharcha entries (optional: older files don't have it). */
+  expenses?: Expense[]
   exportedAt?: string
   /** Explicit deletions (optional; older files don't have it). */
   deleted?: Tombstones
@@ -88,6 +112,7 @@ export const DEFAULT_SETTINGS: Settings = {
   yearlyFee: 600,
   nextMemberCounter: 1,
   nextReceiptCounter: 1,
+  nextExpenseCounter: 1,
   defaultLang: 'gu',
   upiId: '',
   bankDetails: '',
