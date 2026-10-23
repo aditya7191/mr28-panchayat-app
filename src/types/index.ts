@@ -9,6 +9,8 @@ export interface Member {
   name: string
   phone: string
   address: string
+  /** Cloud copy of phone/address as AES-GCM ciphertext ('v1.…'); plaintext never leaves the device. */
+  secret?: string
   feePlan: FeePlan
   status: MemberStatus
   nextDueDate: string // YYYY-MM-DD

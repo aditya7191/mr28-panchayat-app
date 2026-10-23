@@ -58,7 +58,13 @@ export function sanitizeForCloud(data: AppData): AppData {
   return {
     version: data.version || 1,
     settings,
-    members: Array.isArray(data.members) ? data.members : [],
+    // Member contact details never go out in plaintext — only as ciphertext in `secret`.
+    members: (Array.isArray(data.members) ? data.members : []).map((m) => {
+      const { phone: _p, address: _a, secret, ...rest } = m
+      void _p
+      void _a
+      return { ...rest, phone: '', address: '', secret: typeof secret === 'string' && secret.startsWith('v1.') ? secret : '' }
+    }),
     payments: Array.isArray(data.payments) ? data.payments : [],
     expenses: Array.isArray(data.expenses) ? data.expenses : [],
     eduPrograms: Array.isArray(data.eduPrograms) ? data.eduPrograms : [],

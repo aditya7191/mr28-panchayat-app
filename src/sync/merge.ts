@@ -169,12 +169,23 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     ),
   }
 
+  const lById = new Map(lMembers.map((m) => [m.id, m]))
   const members = mergeRecords(
     lMembers,
     rMembers,
     memberTime,
     deleted.members,
-  )
+  ).map((m) => {
+    // Cloud copy without decrypted contacts (no key yet) must not wipe this device's phone/address.
+    const l = lById.get(m.id)
+    if (l && l !== m && !m.phone && !m.address && (l.phone || l.address) && (m.secret || '') === (l.secret || '')) {
+      return { ...m, phone: l.phone, address: l.address }
+    }
+    if (l && l !== m && !m.phone && !m.address && (l.phone || l.address) && memberTime(m) === memberTime(l)) {
+      return { ...m, phone: l.phone, address: l.address }
+    }
+    return m
+  })
   const payments = sortPayments(
     mergeRecords(
       lPayments,

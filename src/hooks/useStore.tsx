@@ -51,6 +51,7 @@ import {
   type SyncStatus,
 } from '../sync'
 import { makeVoucherNo } from '../utils/accounts'
+import { decryptMembersFromCloud, encryptMembersForCloud, membersHaveContacts } from '../utils/memberCrypto'
 import { addBill, uploadPendingBills } from '../utils/bills'
 import { getPendingBills } from '../db'
 
@@ -107,6 +108,8 @@ interface StoreCtx {
   addExpense: (input: ExpenseInput) => Promise<Expense>
   updateExpense: (id: string, input: ExpenseInput) => Promise<void>
   deleteExpense: (id: string) => Promise<void>
+  /** Admin key for private fields (set by AuthProvider after login). */
+  setPrivateKey: (k: CryptoKey | null) => void
   eduPrograms: EduProgram[]
   eduStudents: EduStudent[]
   saveEduProgram: (p: { id?: string; title: string; year: string }) => Promise<EduProgram>
@@ -241,6 +244,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
    * Core sync: read cloud → merge record-by-record into this phone (never deleting local
    * entries the cloud lacks) → if this phone has a token, upload the merged result.
    */
+  const privateKeyRef = useRef<CryptoKey | null>(null)
   const syncWithCloud = useCallback(async (): Promise<boolean> => {
     if (!isCloudSyncEnabled()) return false
     if (syncingRef.current) {
@@ -260,7 +264,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }
           return false
         }
-        const remote = result.data
+        const remote = { ...result.data, members: await decryptMembersFromCloud(result.data.members || [], privateKeyRef.current) }
         const merged = await withLock(async () => {
           const local = await loadAll()
           const next = mergeAppData(local, remote)
@@ -283,9 +287,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setPendingBillCount((await getPendingBills()).length)
         }
 
+        const needKey = !privateKeyRef.current && membersHaveContacts(merged.members || [])
+        if (writable && needKey && countUnsynced(merged, remote) > 0) {
+          // Never upload member phones without encryption: wait for admin login (key).
+          setSyncStatus('readonly')
+          setUnsyncedCount(countUnsynced(merged, remote))
+          return false
+        }
         if (writable && countUnsynced(merged, remote) > 0) {
           setSyncStatus('pushing')
-          const pushed = await pushCloudData(merged)
+          const outgoing = privateKeyRef.current
+            ? { ...merged, members: await encryptMembersForCloud(merged.members || [], privateKeyRef.current) }
+            : merged
+          const pushed = await pushCloudData(outgoing)
           if (!pushed.ok) {
             setSyncStatus('error')
             setSyncError(pushed.error || 'Push failed')
@@ -321,6 +335,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [applyState, withLock])
   const syncWithCloudRef = useRef<(() => Promise<boolean>) | null>(null)
+  const setPrivateKey = useCallback((k: CryptoKey | null) => {
+    const changed = privateKeyRef.current !== k
+    privateKeyRef.current = k
+    if (changed && k) setTimeout(() => void syncWithCloudRef.current?.(), 50)
+  }, [])
   syncWithCloudRef.current = syncWithCloud
 
   const schedulePush = useCallback(() => {
@@ -850,6 +869,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       members,
       payments,
       expenses,
+      setPrivateKey,
       eduPrograms,
       eduStudents,
       saveEduProgram,
@@ -886,6 +906,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     members,
     payments,
     expenses,
+    setPrivateKey,
     eduPrograms,
     eduStudents,
     saveEduProgram,

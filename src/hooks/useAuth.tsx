@@ -34,13 +34,17 @@ function readAuthed(): boolean {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { settings } = useStore()
+  const { settings, setPrivateKey } = useStore()
   const [isAdmin, setIsAdmin] = useState(readAuthed)
   const [eduKey, setEduKey] = useState<CryptoKey | null>(null)
 
   useEffect(() => {
     if (isAdmin && !eduKey) void loadSessionKey().then((k) => k && setEduKey(k))
   }, [isAdmin, eduKey])
+
+  useEffect(() => {
+    setPrivateKey(isAdmin ? eduKey : null)
+  }, [isAdmin, eduKey, setPrivateKey])
 
   const unlockEdu = useCallback(async (password: string) => {
     const k = await deriveEduKey(password)
