@@ -1,18 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #1e3a5f;
-  --color-navy-dark: #152a45;
-  --color-navy-light: #2a4f7a;
-  --color-saffron: #e8850a;
-  --color-saffron-dark: #c46e08;
-  --color-saffron-light: #f5a623;
-  --color-cream: #f8f5f0;
-  --color-cream-dark: #efe8dc;
+  /* Royal maroon + saffron-gold on warm ivory (token names kept for stability) */
+  --color-navy: #6b1d2e;
+  --color-navy-dark: #4a1220;
+  --color-navy-light: #8a2b3f;
+  --color-saffron: #d4880f;
+  --color-saffron-dark: #a3620a;
+  --color-saffron-light: #f0b545;
+  --color-gold: #c9a227;
+  --color-cream: #fbf6ec;
+  --color-cream-dark: #efe2c8;
   --color-success: #1a7a4c;
   --color-danger: #b91c1c;
   --color-warning: #b45309;
-  --font-sans: "Segoe UI", "Noto Sans Gujarati", "Noto Sans", system-ui, sans-serif;
+  --font-sans: "Poppins", "Hind Vadodara", "Noto Sans Gujarati", system-ui, sans-serif;
+  --font-display: "Hind Vadodara", "Poppins", "Noto Sans Gujarati", serif;
 }
 
 html, body, #root {
@@ -23,8 +26,54 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   background: var(--color-cream);
-  color: #1a1a1a;
+  color: #2a1015;
+  font-size: 16.5px;
   -webkit-tap-highlight-color: transparent;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(107, 29, 46, 0.045) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* ---------- Premium theme helpers ---------- */
+.font-display { font-family: var(--font-display); }
+
+/* Decorative mandala-like lattice on maroon surfaces */
+.royal-pattern {
+  background-color: var(--color-navy);
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(240, 181, 69, 0.16) 0 2px, transparent 3px),
+    repeating-linear-gradient(45deg, rgba(240, 181, 69, 0.07) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(-45deg, rgba(240, 181, 69, 0.07) 0 1px, transparent 1px 18px),
+    linear-gradient(160deg, #7d2236 0%, #5a1626 55%, #3f0f1b 100%);
+  background-size: 36px 36px, auto, auto, auto;
+}
+.gold-rule {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #f0b545 20%, #c9a227 50%, #f0b545 80%, transparent);
+}
+.gold-text {
+  background: linear-gradient(180deg, #f8d77a, #d4a12a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Soft, layered card shadows everywhere cards are used */
+.shadow-sm { box-shadow: 0 1px 2px rgba(74, 18, 32, 0.06), 0 4px 14px rgba(74, 18, 32, 0.07) !important; }
+.shadow-md { box-shadow: 0 2px 4px rgba(74, 18, 32, 0.08), 0 10px 28px rgba(74, 18, 32, 0.12) !important; }
+
+button, a, input, select, textarea {
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .12s ease, color .18s ease;
+}
+button:active, a:active { transform: scale(0.97); }
+input, select, textarea { min-height: 44px; font-size: 16px !important; }
+textarea { min-height: 64px; }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+main > * { animation: fade-up .35s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  main > * { animation: none; }
+  button:active, a:active { transform: none; }
 }
 
 @media print {

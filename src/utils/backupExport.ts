@@ -194,8 +194,8 @@ export function downloadPdfBackup(
     startY: y,
     margin: { left: margin, right: margin },
     styles: { fontSize: 7, cellPadding: 1.2, overflow: 'linebreak' },
-    headStyles: { fillColor: [26, 54, 93], textColor: 255, fontSize: 7 },
-    alternateRowStyles: { fillColor: [245, 240, 230] },
+    headStyles: { fillColor: [107, 29, 46], textColor: 255, fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 246, 236] },
     head: [['No.', 'Name', 'Phone', 'Address', 'Plan', 'Status', 'Next due']],
     body: members.map((m) => [
       m.membershipNo,
@@ -224,8 +224,8 @@ export function downloadPdfBackup(
     startY: y2,
     margin: { left: margin, right: margin },
     styles: { fontSize: 7, cellPadding: 1.2, overflow: 'linebreak' },
-    headStyles: { fillColor: [26, 54, 93], textColor: 255, fontSize: 7 },
-    alternateRowStyles: { fillColor: [245, 240, 230] },
+    headStyles: { fillColor: [107, 29, 46], textColor: 255, fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 246, 236] },
     head: [
       ['Receipt', 'Member', 'Amount', 'Method', 'Period', 'Paid at', 'Notes'],
     ],
@@ -257,8 +257,8 @@ export function downloadPdfBackup(
   const tableStyle = {
     margin: { left: margin, right: margin },
     styles: { fontSize: 7, cellPadding: 1.2, overflow: 'linebreak' as const },
-    headStyles: { fillColor: [26, 54, 93] as [number, number, number], textColor: 255, fontSize: 7 },
-    alternateRowStyles: { fillColor: [245, 240, 230] as [number, number, number] },
+    headStyles: { fillColor: [107, 29, 46] as [number, number, number], textColor: 255, fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 246, 236] as [number, number, number] },
   }
 
   autoTable(doc, {

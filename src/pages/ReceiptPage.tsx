@@ -349,7 +349,7 @@ export function ReceiptPage() {
               ? 'bg-[#25D366] text-white'
               : toast.kind === 'error'
                 ? 'bg-[#b91c1c] text-white'
-                : 'bg-[#1e3a5f] text-white'
+                : 'bg-navy text-white'
           }`}
         >
           {toast.msg}

@@ -39,16 +39,16 @@ export function Gate() {
     <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col bg-cream">
       <Watermark />
 
-      <header className="relative z-30 border-b border-cream-dark bg-navy px-4 py-4 text-white">
+      <header className="relative z-30 royal-pattern px-4 py-4 text-white shadow-md">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-3">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt="MR28"
-              className="h-14 w-auto shrink-0 object-contain"
+              className="h-16 w-16 shrink-0 rounded-full bg-[#fffaf0] object-contain p-1 ring-2 ring-saffron-light/70"
             />
             <div className="min-w-0">
-              <h1 className="text-base font-bold leading-tight">
+              <h1 className="font-display text-lg font-bold leading-tight text-saffron-light">
                 {lang === 'gu' ? settings.orgNameGu : settings.orgNameEn}
               </h1>
               <p className="mt-0.5 text-[11px] leading-snug text-white/70">

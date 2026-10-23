@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, IndianRupee, Search, Users } from 'lucide-react'
-import { DeveloperCredit } from '../components/DeveloperCredit'
+import { ArrowLeft, Search } from 'lucide-react'
+import { Hero } from '../components/Hero'
+import { RoyalFooter } from '../components/RoyalFooter'
+import { StatTiles } from '../components/StatTiles'
 import { ExpenseList } from '../components/ExpenseList'
 import { HisabSummary } from '../components/HisabSummary'
 import { Watermark } from '../components/Watermark'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
-import { formatDate, formatINR, totalCollected } from '../utils/format'
+import { formatDate } from '../utils/format'
 import type { Member, Payment } from '../types'
 
 function latestPaymentFor(
@@ -42,14 +44,13 @@ export function PublicHome() {
       })
   }, [members, q])
 
-  const totalJama = useMemo(() => totalCollected(payments), [payments])
 
   return (
     <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col bg-cream">
       <Watermark />
 
-      <header className="relative z-30 flex items-center gap-2 border-b border-cream-dark bg-navy px-3 py-3 text-white">
-        <Link to="/gate" className="rounded-full p-1.5 hover:bg-white/10">
+      <header className="relative z-30 flex items-center gap-2 royal-pattern px-3 py-3 shadow-md text-white">
+        <Link to="/gate" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10" aria-label="Back">
           <ArrowLeft size={20} />
         </Link>
         <div className="min-w-0 flex-1">
@@ -59,77 +60,27 @@ export function PublicHome() {
         <button
           type="button"
           onClick={toggle}
-          className="shrink-0 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold"
+          className="shrink-0 rounded-full border border-saffron-light/50 bg-white/10 px-4 py-2 text-sm font-semibold"
         >
           {lang === 'gu' ? 'EN' : 'ગુ'}
         </button>
       </header>
 
       <main className="relative z-10 flex flex-1 flex-col gap-4 p-4">
-        <div className="rounded-2xl border border-navy/10 bg-white p-4 text-center shadow-sm">
-          <img
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt=""
-            className="mx-auto mb-3 h-20 w-auto object-contain opacity-90"
-          />
-          <h2 className="text-base font-bold text-navy">
-            {lang === 'gu' ? settings.orgNameGu : settings.orgNameEn}
-          </h2>
-          <p className="mt-1 text-xs leading-snug text-navy/60">
-            {lang === 'gu' ? settings.orgSubtitleGu : settings.orgSubtitleEn}
-          </p>
-          <p className="mt-3 text-sm font-bold text-saffron-dark">
-            જય રોહિદાસ બાપુ
-          </p>
-          <p className="text-[11px] text-navy/45">Jay Rohidas Baapu</p>
-        </div>
+        <Hero />
 
-        <section
-          aria-label="કુલ જમા / Total collected"
-          className="rounded-2xl border-2 border-saffron bg-gradient-to-br from-saffron/15 to-saffron/5 p-5 text-center shadow-md"
-        >
-          <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-saffron text-white">
-            <IndianRupee size={22} />
-          </div>
-          <p className="text-sm font-bold text-navy">
-            કુલ જમા / Total collected
-          </p>
-          <p className="mt-1 text-4xl font-extrabold tracking-tight text-saffron-dark">
-            ₹{formatINR(totalJama)}
-          </p>
-          <p className="mt-2 text-[11px] leading-snug text-navy/60">
-            પંચાયત પાસે જમા રકમ (બધી ચુકવણીનો સરવાળો)
-            <br />
-            Amount with Panchayat (sum of all payments)
-          </p>
-          <p className="mt-1 text-[10px] text-navy/45">
-            {payments.length} રસીદ / receipts
-          </p>
-        </section>
+        <StatTiles />
 
         <HisabSummary />
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-bold text-navy">{t('publicExpenses')}</h3>
+          <h3 className="mb-3 border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">{t('publicExpenses')}</h3>
           <ExpenseList expenses={expenses} />
         </section>
 
-        <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy">
-              <Users size={24} />
-            </span>
-            <div>
-              <p className="text-[11px] font-semibold text-navy/50">
-                {t('totalMembers')} / Total Members
-              </p>
-              <p className="text-2xl font-bold text-navy">{members.length}</p>
-            </div>
-          </div>
-        </section>
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-bold text-navy">
+          <h3 className="mb-3 border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">
             {t('publicMembersList')}
           </h3>
 
@@ -164,7 +115,7 @@ export function PublicHome() {
         </section>
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-bold text-navy">{t('publicFees')}</h3>
+          <h3 className="mb-3 border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">{t('publicFees')}</h3>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-cream p-3 text-center">
               <p className="text-[10px] font-semibold text-navy/50">
@@ -186,7 +137,7 @@ export function PublicHome() {
         </section>
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-bold text-navy">{t('publicContact')}</h3>
+          <h3 className="mb-3 border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">{t('publicContact')}</h3>
           {settings.upiId ? (
             <p className="text-sm text-navy">
               <span className="text-xs font-semibold text-navy/50">UPI: </span>
@@ -204,19 +155,19 @@ export function PublicHome() {
 
         <Link
           to="/gate"
-          className="mt-auto rounded-xl border border-navy/20 bg-white py-3 text-center text-sm font-semibold text-navy"
+          className="mt-auto rounded-2xl border-2 border-navy/20 bg-white py-3.5 text-base text-center text-sm font-semibold text-navy"
         >
           {t('backToGate')}
         </Link>
         <Link
           to="/gate"
           state={{ openAdmin: true }}
-          className="rounded-xl bg-saffron py-3 text-center text-sm font-bold text-white"
+          className="rounded-2xl bg-gradient-to-r from-saffron to-saffron-dark py-3.5 text-center text-base font-bold text-white shadow-md"
         >
           {t('adminLogin')}
         </Link>
 
-        <DeveloperCredit className="mt-2 pb-2" />
+        <RoyalFooter className="mt-2" />
       </main>
     </div>
   )
@@ -234,7 +185,7 @@ function PublicMemberCard({
     : '—'
 
   return (
-    <li className="rounded-xl border border-navy/10 bg-cream p-3">
+    <li className="rounded-xl border border-navy/10 border-l-4 border-l-saffron bg-cream p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="rounded-md bg-saffron/15 px-1.5 py-0.5 text-[11px] font-bold text-saffron-dark">
           {member.membershipNo}
@@ -244,16 +195,16 @@ function PublicMemberCard({
 
       <div className="mt-2 space-y-1.5 border-t border-navy/10 pt-2">
         <div>
-          <p className="text-[10px] font-semibold leading-tight text-navy/50">
+          <p className="text-[11px] font-semibold leading-tight text-navy/55">
             ફાળો ભરેલો સુધી / Fala paid up to (last period)
           </p>
-          <p className="text-[12px] font-semibold text-navy">{paidUpLabel}</p>
+          <p className="text-[13px] font-semibold text-navy">{paidUpLabel}</p>
         </div>
         <div>
-          <p className="text-[10px] font-semibold leading-tight text-navy/50">
+          <p className="text-[11px] font-semibold leading-tight text-navy/55">
             આગામી ફાળો તારીખ / Next due
           </p>
-          <p className="text-[12px] font-semibold text-navy">
+          <p className="text-[13px] font-semibold text-navy">
             {formatDate(member.nextDueDate)}
           </p>
         </div>

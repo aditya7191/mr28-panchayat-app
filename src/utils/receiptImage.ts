@@ -33,11 +33,11 @@ export interface ReceiptImageData {
   logoUrl?: string
 }
 
-const NAVY = '#1e3a5f'
-const SAFFRON = '#e8850a'
-const SAFFRON_DARK = '#c46e08'
+const NAVY = '#6b1d2e'
+const SAFFRON = '#d4880f'
+const SAFFRON_DARK = '#a3620a'
 const FONT_STACK =
-  '"Noto Sans Gujarati", "Segoe UI", "Noto Sans", system-ui, -apple-system, sans-serif'
+  '"Hind Vadodara", "Noto Sans Gujarati", "Poppins", "Segoe UI", "Noto Sans", system-ui, -apple-system, sans-serif'
 
 function font(weight: number, px: number) {
   return `${weight} ${px}px ${FONT_STACK}`
@@ -155,12 +155,16 @@ export async function renderReceiptImage(
   canvas.height = H
 
   // ---- Draw ----
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = '#fffaf0'
   ctx.fillRect(0, 0, W, H)
-  // Card border
-  ctx.strokeStyle = 'rgba(30,58,95,0.2)'
-  ctx.lineWidth = 4
+  // Royal double border: maroon outer, gold inner
+  ctx.strokeStyle = NAVY
+  ctx.lineWidth = 6
   roundRect(ctx, 14, 14, W - 28, H - 28, 36)
+  ctx.stroke()
+  ctx.strokeStyle = '#c9a227'
+  ctx.lineWidth = 2
+  roundRect(ctx, 28, 28, W - 56, H - 56, 28)
   ctx.stroke()
 
   // Watermark logo (original logo.png, unmodified, drawn at low opacity)
@@ -196,7 +200,7 @@ export async function renderReceiptImage(
     y += 54
   }
   y += 8
-  ctx.fillStyle = 'rgba(30,58,95,0.65)'
+  ctx.fillStyle = 'rgba(107,29,46,0.65)'
   ctx.font = font(400, 26)
   for (const l of subLines) {
     ctx.fillText(l, W / 2, y)
@@ -216,7 +220,7 @@ export async function renderReceiptImage(
     const px = r.row.highlight ? 44 : 32
     const lineH = Math.round(px * 1.35)
     ctx.textAlign = 'left'
-    ctx.fillStyle = 'rgba(30,58,95,0.55)'
+    ctx.fillStyle = 'rgba(107,29,46,0.55)'
     ctx.font = font(400, 26)
     ctx.fillText(r.row.label, PAD, y + 6)
     ctx.textAlign = 'right'
@@ -230,7 +234,7 @@ export async function renderReceiptImage(
     // dashed separator
     const sepY = y + r.h - 14
     ctx.save()
-    ctx.strokeStyle = 'rgba(30,58,95,0.15)'
+    ctx.strokeStyle = 'rgba(107,29,46,0.15)'
     ctx.lineWidth = 2
     ctx.setLineDash([10, 8])
     ctx.beginPath()
@@ -243,12 +247,12 @@ export async function renderReceiptImage(
 
   y += 56
   ctx.textAlign = 'center'
-  ctx.fillStyle = 'rgba(30,58,95,0.8)'
+  ctx.fillStyle = 'rgba(107,29,46,0.8)'
   ctx.font = font(700, 30)
   ctx.fillText(data.thankYou, W / 2, y)
   y += 44
   if (data.footer) {
-    ctx.fillStyle = 'rgba(30,58,95,0.45)'
+    ctx.fillStyle = 'rgba(107,29,46,0.45)'
     ctx.font = font(500, 22)
     ctx.fillText(data.footer, W / 2, y)
   }
