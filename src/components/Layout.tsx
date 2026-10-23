@@ -129,7 +129,7 @@ export function Layout() {
               {({ isActive }) => (
                 <>
                   <span className={`absolute top-0 h-[3px] w-8 rounded-b-full transition-all ${isActive ? 'bg-saffron' : 'bg-transparent'}`} />
-                  <span className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors ${isActive ? 'bg-navy text-saffron-light shadow-sm' : ''}`}>
+                  <span className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors ${isActive ? 'bg-navy text-saffron-light shadow-sm ring-2 ring-[#e8b84a]' : ''}`}>
                     <Icon size={20} strokeWidth={2.2} />
                   </span>
                   <span className="max-w-full truncate px-0.5">{t(label)}</span>

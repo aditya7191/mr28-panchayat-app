@@ -7,7 +7,7 @@ import { StatTiles } from '../components/StatTiles'
 import { ExpenseList } from '../components/ExpenseList'
 import { HisabSummary } from '../components/HisabSummary'
 import { Watermark } from '../components/Watermark'
-import { EduBoard, EDU_SECTION_SUB, EDU_SECTION_TITLE } from '../components/EduBoard'
+import { EDU_SECTION_TITLE } from '../components/EduBoard'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
 import { formatDate } from '../utils/format'
@@ -150,14 +150,18 @@ export function PublicHome() {
         </section>
 
         {eduProgram && eduPublic.length > 0 && (
-          <section id="education" className="rounded-2xl border border-saffron/40 bg-white p-4 shadow-sm">
-            <h3 className="border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">
-              🌟 {EDU_SECTION_TITLE}
-            </h3>
-            <p className="mb-1 pl-3 text-xs text-navy/60">{EDU_SECTION_SUB}</p>
-            <p className="mb-3 pl-3 text-[11px] font-semibold text-saffron-dark">{eduProgram.title}</p>
-            <EduBoard students={eduPublic} lang={lang} showPct={false} />
-          </section>
+          <Link
+            to="/taarle"
+            id="education-card"
+            className="block rounded-2xl border-2 border-saffron/50 royal-pattern p-4 text-white shadow-lg active:scale-[0.99]"
+          >
+            <p className="font-display text-lg font-bold leading-snug">🌟 {EDU_SECTION_TITLE}</p>
+            <p className="mt-1 text-xs text-white/75">{eduProgram.title}</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">🎓 {eduPublic.length} {lang === 'gu' ? 'વિદ્યાર્થીઓ' : 'students'}</span>
+              <span className="rounded-full bg-saffron px-3 py-1 text-xs font-bold text-white">{lang === 'gu' ? 'જુઓ →' : 'View →'}</span>
+            </div>
+          </Link>
         )}
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">

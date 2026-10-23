@@ -11,6 +11,7 @@ import { Payments } from './pages/Payments'
 import { Expenses } from './pages/Expenses'
 import { Education } from './pages/Education'
 import { PublicHome } from './pages/PublicHome'
+import { PublicTaarle } from './pages/PublicTaarle'
 import { Reminders } from './pages/Reminders'
 import { Settings } from './pages/Settings'
 import { ReceiptPage } from './pages/ReceiptPage'
@@ -40,6 +41,7 @@ function AppRoutes() {
           <Routes>
             <Route path="/gate" element={<Gate />} />
             <Route path="/public" element={<PublicHome />} />
+            <Route path="/taarle" element={<PublicTaarle />} />
             <Route
               path="/receipt/:id"
               element={

@@ -18,8 +18,8 @@ export function StatTiles() {
   return (
     <div className="grid grid-cols-2 gap-3">
       {tiles.map(({ label, sub, value, Icon, tone, chip }) => (
-        <div key={sub} className="relative overflow-hidden rounded-2xl border border-saffron/25 bg-white p-3.5 shadow-sm">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-saffron-light via-saffron to-navy" />
+        <div key={sub} className="relative overflow-hidden rounded-2xl border silver-border bg-white p-3.5 shadow-sm">
+          <div className="absolute inset-x-0 top-0 h-1 gold-bar" />
           <span className={`mb-2 flex h-10 w-10 items-center justify-center rounded-xl ${chip}`}>
             <Icon size={20} />
           </span>

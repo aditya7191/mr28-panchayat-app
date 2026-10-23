@@ -162,10 +162,21 @@ export async function renderReceiptImage(
   ctx.lineWidth = 6
   roundRect(ctx, 14, 14, W - 28, H - 28, 36)
   ctx.stroke()
-  ctx.strokeStyle = '#c9a227'
-  ctx.lineWidth = 2
-  roundRect(ctx, 28, 28, W - 56, H - 56, 28)
-  ctx.stroke()
+  {
+    // Gold inner frame + fine silver hairline (premium gold & silver accent)
+    const g = ctx.createLinearGradient(0, 0, W, H)
+    g.addColorStop(0, '#f7d774'); g.addColorStop(0.5, '#c9971c'); g.addColorStop(1, '#f5c04a')
+    ctx.strokeStyle = g
+    ctx.lineWidth = 3
+    roundRect(ctx, 28, 28, W - 56, H - 56, 28)
+    ctx.stroke()
+    const s = ctx.createLinearGradient(0, 0, W, 0)
+    s.addColorStop(0, '#9aa3ad'); s.addColorStop(0.5, '#eef0f3'); s.addColorStop(1, '#9aa3ad')
+    ctx.strokeStyle = s
+    ctx.lineWidth = 1.5
+    roundRect(ctx, 36, 36, W - 72, H - 72, 22)
+    ctx.stroke()
+  }
 
   // Watermark logo (original logo.png, unmodified, drawn at low opacity)
   if (logo && logo.naturalWidth > 0) {

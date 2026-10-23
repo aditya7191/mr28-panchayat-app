@@ -7,9 +7,9 @@ export const EDU_SECTION_TITLE = 'મીરા રોડ ના તેજસ્�
 export const EDU_SECTION_SUB = 'Mira Road ke Tejasvi Taarle (Shining Stars)'
 
 const MEDAL = [
-  { cls: 'bg-gradient-to-br from-[#f7d774] to-[#c9971c] text-[#4a1220] ring-[#c9971c]', en: 'Gold', gu: 'સુવર્ણ' },
-  { cls: 'bg-gradient-to-br from-[#eef0f3] to-[#9aa3ad] text-[#2b2f36] ring-[#9aa3ad]', en: 'Silver', gu: 'રજત' },
-  { cls: 'bg-gradient-to-br from-[#f1c08f] to-[#a8632a] text-white ring-[#a8632a]', en: 'Bronze', gu: 'કાંસ્ય' },
+  { cls: 'metal-shine bg-gradient-to-br from-[#f7d774] to-[#c9971c] text-[#4a1220] ring-[#c9971c]', en: 'Gold', gu: 'સુવર્ણ' },
+  { cls: 'metal-shine bg-gradient-to-br from-[#eef0f3] to-[#9aa3ad] text-[#2b2f36] ring-[#9aa3ad]', en: 'Silver', gu: 'રજત' },
+  { cls: 'metal-shine bg-gradient-to-br from-[#f1c08f] to-[#a8632a] text-white ring-[#a8632a]', en: 'Bronze', gu: 'કાંસ્ય' },
 ]
 
 export function RankBadge({ rank }: { rank: number | null }) {
