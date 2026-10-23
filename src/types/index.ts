@@ -111,6 +111,8 @@ export interface EduStudent {
   standard: string
   stream: string
   goal: string
+  /** Mother & father name — PUBLIC (shown on the public page). */
+  parents?: string
   /** Result percentage 0–100, or null when not entered yet. */
   resultPct: number | null
   status: string
@@ -124,7 +126,7 @@ export interface EduStudent {
 export interface EduPrivate {
   mobile: string
   marksheet: string
-  /** Mother & father name (admin-only). */
+  /** Legacy: parent names were briefly stored here; now public on EduStudent. */
   parents?: string
 }
 

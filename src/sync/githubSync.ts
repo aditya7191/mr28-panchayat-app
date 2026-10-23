@@ -39,6 +39,7 @@ export function publicEduStudent(s: EduStudent): EduStudent {
     standard: String(s.standard || ''),
     stream: String(s.stream || ''),
     goal: String(s.goal || ''),
+    parents: String(s.parents || ''),
     resultPct: pct !== null && Number.isFinite(pct) ? pct : null,
     status: String(s.status || ''),
     secret: typeof s.secret === 'string' && s.secret.startsWith('v1.') ? s.secret : '',

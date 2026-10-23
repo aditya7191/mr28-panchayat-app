@@ -60,7 +60,7 @@ export function Education() {
       if (!live) return
       if (!p) return setPrivState('bad')
       setPrivState('ok')
-      setDraft((d) => (d && d.id === draft.id ? { ...d, mobile: p.mobile, marksheet: p.marksheet, parents: p.parents || '' } : d))
+      setDraft((d) => (d && d.id === draft.id ? { ...d, mobile: p.mobile, marksheet: p.marksheet, parents: d.parents || p.parents || '' } : d))
     })
     return () => {
       live = false
@@ -75,7 +75,7 @@ export function Education() {
 
   function openEdit(s: EduStudent) {
     setPrivState(s.secret ? (eduKey ? 'ok' : 'locked') : 'ok')
-    setDraft({ ...s, resultPct: s.resultPct === null ? '' : String(s.resultPct), mobile: '', marksheet: '', parents: '' })
+    setDraft({ ...s, resultPct: s.resultPct === null ? '' : String(s.resultPct), mobile: '', marksheet: '', parents: s.parents || '' })
   }
 
   async function saveDraft() {
@@ -83,8 +83,8 @@ export function Education() {
     if (!draft.name.trim()) return flash(L('નામ જરૂરી છે', 'Name is required'))
     let secret = draft.secret
     if (privState === 'ok') {
-      if ((draft.mobile.trim() || draft.marksheet.trim() || draft.parents.trim()) && !eduKey) return flash(L('ખાનગી માહિતી માટે અનલૉક કરો', 'Unlock to save private fields'))
-      secret = eduKey ? await encryptPrivate(eduKey, { mobile: draft.mobile, marksheet: draft.marksheet, parents: draft.parents }) : ''
+      if ((draft.mobile.trim() || draft.marksheet.trim()) && !eduKey) return flash(L('ખાનગી માહિતી માટે અનલૉક કરો', 'Unlock to save private fields'))
+      secret = eduKey ? await encryptPrivate(eduKey, { mobile: draft.mobile, marksheet: draft.marksheet }) : ''
     } // locked / bad → keep existing ciphertext untouched
     const pctRaw = draft.resultPct.trim()
     const pct = pctRaw === '' ? null : Number(pctRaw)
@@ -97,6 +97,7 @@ export function Education() {
       standard: draft.standard,
       stream: draft.stream,
       goal: draft.goal,
+      parents: draft.parents,
       resultPct: pct,
       status: draft.status || 'Registered',
       secret,
@@ -206,6 +207,7 @@ export function Education() {
                 <div><label className={label}>{L('પ્રવાહ', 'Stream')}</label><input className={field} value={draft.stream} onChange={(e) => set('stream', e.target.value)} /></div>
               </div>
               <div><label className={label}>{L('શાળા / કૉલેજ', 'School / College')}</label><input className={field} value={draft.school} onChange={(e) => set('school', e.target.value)} /></div>
+              <div><label className={label}>{L('માતા-પિતાનું નામ (જાહેર)', 'Mother & father name (public)')}</label><input className={field} value={draft.parents} onChange={(e) => set('parents', e.target.value)} /></div>
               <div><label className={label}>{L('ભવિષ્યનું લક્ષ્ય', 'Future goal')}</label><input className={field} value={draft.goal} onChange={(e) => set('goal', e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className={label}>{L('પરિણામ %', 'Result %')}</label><input className={field} inputMode="decimal" value={draft.resultPct} onChange={(e) => set('resultPct', e.target.value)} placeholder="—" /></div>
@@ -213,13 +215,11 @@ export function Education() {
               </div>
               <div className="rounded-xl border border-saffron/40 bg-saffron/5 p-3">
                 <p className="mb-2 flex items-center gap-1 text-xs font-bold text-navy">
-                  <Lock size={12} /> {L('ખાનગી (એન્ક્રિપ્ટેડ, જાહેરમાં ક્યારેય નહીં)', 'Private (encrypted, never public)')}
+                  <Lock size={12} /> {L('ખાનગી: મોબાઇલ અને માર્કશીટ (એન્ક્રિપ્ટેડ)', 'Private: mobile & marksheet (encrypted)')}
                 </p>
                 {privState === 'ok' ? (
                   <>
-                    <label className={label}>{L('માતા-પિતાનું નામ', 'Mother & father name')}</label>
-                    <input className={field} value={draft.parents} onChange={(e) => set('parents', e.target.value)} />
-                    <label className={`${label} mt-2`}>{L('મોબાઇલ', 'Mobile')}</label>
+                    <label className={label}>{L('મોબાઇલ', 'Mobile')}</label>
                     <input className={field} inputMode="tel" value={draft.mobile} onChange={(e) => set('mobile', e.target.value)} />
                     <label className={`${label} mt-2`}>{L('માર્કશીટ લિંક', 'Marksheet link')}</label>
                     <input className={field} value={draft.marksheet} onChange={(e) => set('marksheet', e.target.value)} />

@@ -28,7 +28,7 @@ type Filter = 'all' | EduBand
 
 /**
  * Ranked student list with All / Toppers tabs and band chips.
- * `showPct` = false on the public page (only name, school, standard, stream, goal).
+ * `showPct` = false on the public page (name, parents, school, standard, stream, goal).
  */
 export function EduBoard({
   students,
@@ -88,6 +88,11 @@ export function EduBoard({
         <p className="text-xs text-navy/60">
           {[r.s.standard && `${L('ધો.', 'Std')} ${r.s.standard}`, r.s.stream, r.s.school].filter(Boolean).join(' · ')}
         </p>
+        {r.s.parents && (
+          <p className="text-xs text-navy/70">
+            <span className="font-semibold text-navy/50">માતા-પિતા / Mata-Pita:</span> {r.s.parents}
+          </p>
+        )}
         {r.s.goal && (
           <p className="mt-0.5 text-xs text-saffron-dark">
             🎯 {r.s.goal}

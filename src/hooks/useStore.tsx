@@ -746,6 +746,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           standard: input.standard.trim(),
           stream: input.stream.trim(),
           goal: input.goal.trim(),
+          parents: (input.parents || '').trim(),
           resultPct: pct !== null && Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : null,
           status: input.status.trim(),
           secret: input.secret.startsWith('v1.') ? input.secret : '',

@@ -63,18 +63,22 @@ async function main() {
   await ok('sanitize: only whitelisted fields + ciphertext reach the cloud', () => {
     const dirty = { ...stu('a', { secret: 'v1.aaa.bbb' }), mobile: '9876543210', marksheet: 'https://drive.google.com/x' } as unknown as EduStudent
     const plain = stu('b', { secret: '9876543210' })
+    dirty.parents = 'Rekha & Ramesh Musadia'
     const out = sanitizeForCloud({ ...base(), eduPrograms: [prog('p1')], eduStudents: [dirty, plain] })
     const json = JSON.stringify(out)
     assert.ok(!json.includes('9876543210'))
     assert.ok(!json.includes('drive.google.com'))
     assert.equal(out.eduStudents![0].secret, 'v1.aaa.bbb')
+    assert.equal(out.eduStudents![0].parents, 'Rekha & Ramesh Musadia') // parents are public
+    assert.equal(out.eduStudents![1].parents, '')
+    assert.ok(!('mobile' in out.eduStudents![0]) && !('marksheet' in out.eduStudents![0]))
     assert.equal(out.eduStudents![1].secret, '')
     const back = parseAppData(JSON.parse(json))
     assert.ok(back && !JSON.stringify(back).includes('drive.google.com'))
   })
   await ok('crypto: roundtrip, random IV, wrong password fails', async () => {
     const k = await deriveEduKey('aditya@1989')
-    const p = { mobile: '9876543210', marksheet: 'https://drive.google.com/open?id=abc', parents: 'Test Parent' }
+    const p = { mobile: '9876543210', marksheet: 'https://drive.google.com/open?id=abc', parents: '' }
     const c1 = await encryptPrivate(k, p)
     const c2 = await encryptPrivate(k, p)
     assert.ok(c1.startsWith('v1.'))
