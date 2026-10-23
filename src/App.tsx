@@ -9,6 +9,7 @@ import { Gate } from './pages/Gate'
 import { Members } from './pages/Members'
 import { Payments } from './pages/Payments'
 import { Expenses } from './pages/Expenses'
+import { Education } from './pages/Education'
 import { PublicHome } from './pages/PublicHome'
 import { Reminders } from './pages/Reminders'
 import { Settings } from './pages/Settings'
@@ -58,6 +59,7 @@ function AppRoutes() {
               <Route path="members" element={<Members />} />
               <Route path="payments" element={<Payments />} />
               <Route path="expenses" element={<Expenses />} />
+              <Route path="education" element={<Education />} />
               <Route path="reminders" element={<Reminders />} />
               <Route path="settings" element={<Settings />} />
             </Route>

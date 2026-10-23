@@ -69,7 +69,7 @@ export interface Settings {
   autoWhatsAppAfterPayment: boolean
   /** Delay (ms) between sequential reminder WhatsApp opens. Default 2000. */
   whatsAppBatchDelayMs: number
-  /** Admin gate password (default aditya@1989). Stored in settings. */
+  /** Admin gate password; blank = built-in default (hash-checked). Local only. */
   adminPassword: string
   /** Name shown as “Received by” on receipts (officer who collected fala). */
   receivedBy: string
@@ -86,9 +86,47 @@ export interface Tombstones {
   members: Record<string, string>
   payments: Record<string, string>
   expenses: Record<string, string>
+  eduPrograms: Record<string, string>
+  eduStudents: Record<string, string>
 }
 
-export const EMPTY_TOMBSTONES: Tombstones = { members: {}, payments: {}, expenses: {} }
+export const EMPTY_TOMBSTONES: Tombstones = { members: {}, payments: {}, expenses: {}, eduPrograms: {}, eduStudents: {} }
+
+/** Education programme (e.g. "Mira Road Education Support & Book Distribution Program 2026"). */
+export interface EduProgram {
+  id: string
+  title: string
+  year: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** Student in a programme. Public fields only — mobile + marksheet live ONLY inside `secret`
+ *  (AES-GCM ciphertext, key derived from the admin password). Never add plaintext private keys here. */
+export interface EduStudent {
+  id: string
+  programId: string
+  name: string
+  school: string
+  standard: string
+  stream: string
+  goal: string
+  /** Result percentage 0–100, or null when not entered yet. */
+  resultPct: number | null
+  status: string
+  /** "v1.<iv>.<ciphertext>" of {mobile, marksheet}; '' when both empty. */
+  secret: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** Decrypted private fields (memory only, admin only). */
+export interface EduPrivate {
+  mobile: string
+  marksheet: string
+  /** Mother & father name (admin-only). */
+  parents?: string
+}
 
 export interface AppData {
   version: number
@@ -97,6 +135,9 @@ export interface AppData {
   payments: Payment[]
   /** Kharcha entries (optional: older files don't have it). */
   expenses?: Expense[]
+  /** Education (optional: older files don't have it). */
+  eduPrograms?: EduProgram[]
+  eduStudents?: EduStudent[]
   exportedAt?: string
   /** Explicit deletions (optional; older files don't have it). */
   deleted?: Tombstones
@@ -118,6 +159,6 @@ export const DEFAULT_SETTINGS: Settings = {
   bankDetails: '',
   autoWhatsAppAfterPayment: true,
   whatsAppBatchDelayMs: 2000,
-  adminPassword: 'aditya@1989',
+  adminPassword: '', // '' = default password (checked by hash, see utils/password)
   receivedBy: 'Aditya Solanki (Vice Secretary)',
 }

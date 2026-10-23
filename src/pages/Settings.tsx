@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { checkAdminPassword } from '../utils/password'
 import { DeveloperCredit } from '../components/DeveloperCredit'
 import { LocalOnlyWarning } from '../components/LocalOnlyWarning'
 import type { BackupSnapshot } from '../db'
@@ -92,9 +93,9 @@ export function Settings() {
   async function handleSave() {
     const next = { ...form }
     if (!next.adminPassword?.trim()) {
-      next.adminPassword = 'aditya@1989'
+      next.adminPassword = '' // blank = keep default password
     }
-    if (next.adminPassword !== (settings.adminPassword || 'aditya@1989')) {
+    if (next.adminPassword && next.adminPassword !== settings.adminPassword) {
       if (!pwdConfirm || pwdConfirm !== next.adminPassword) {
         setMsg(t('wrongPassword'))
         setTimeout(() => setMsg(''), 2500)
@@ -163,7 +164,7 @@ export function Settings() {
       'પુષ્ટિ માટે એડમિન પાસવર્ડ લખો / Re-enter admin password to confirm reset',
     )
     if (pw === null) return
-    if (pw !== (settings.adminPassword || 'aditya@1989')) {
+    if (!checkAdminPassword(pw, settings.adminPassword)) {
       alert('ખોટો પાસવર્ડ — કંઈ કાઢ્યું નથી / Wrong password — nothing was deleted')
       return
     }
@@ -368,7 +369,8 @@ export function Settings() {
               className={field}
               type="password"
               autoComplete="new-password"
-              value={form.adminPassword ?? 'aditya@1989'}
+              value={form.adminPassword ?? ''}
+              placeholder="(default)"
               onChange={(e) => patch('adminPassword', e.target.value)}
             />
           </div>
@@ -380,7 +382,7 @@ export function Settings() {
               autoComplete="new-password"
               value={pwdConfirm}
               onChange={(e) => setPwdConfirm(e.target.value)}
-              placeholder={form.adminPassword || 'aditya@1989'}
+              placeholder={form.adminPassword ? '' : '(default)'}
             />
           </div>
           <p className="text-[10px] text-navy/40">{t('adminPasswordHint')}</p>

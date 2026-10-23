@@ -13,6 +13,8 @@
 import {
   DEFAULT_SETTINGS,
   type AppData,
+  type EduProgram,
+  type EduStudent,
   type Expense,
   type Member,
   type Payment,
@@ -32,11 +34,17 @@ export function expenseTime(e: Expense): string {
   return e.updatedAt || e.createdAt || ''
 }
 
+export function eduTime(r: EduProgram | EduStudent): string {
+  return r.updatedAt || r.createdAt || ''
+}
+
 export function normalizeTombstones(t?: Partial<Tombstones> | null): Tombstones {
   return {
     members: { ...(t?.members || {}) },
     payments: { ...(t?.payments || {}) },
     expenses: { ...(t?.expenses || {}) },
+    eduPrograms: { ...(t?.eduPrograms || {}) },
+    eduStudents: { ...(t?.eduStudents || {}) },
   }
 }
 
@@ -133,6 +141,10 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
   const rPayments = afterReset(Array.isArray(remote.payments) ? remote.payments : [], paymentTime)
   const lExpenses = afterReset(Array.isArray(local.expenses) ? local.expenses : [], expenseTime)
   const rExpenses = afterReset(Array.isArray(remote.expenses) ? remote.expenses : [], expenseTime)
+  const lEduP = afterReset(Array.isArray(local.eduPrograms) ? local.eduPrograms : [], eduTime)
+  const rEduP = afterReset(Array.isArray(remote.eduPrograms) ? remote.eduPrograms : [], eduTime)
+  const lEduS = afterReset(Array.isArray(local.eduStudents) ? local.eduStudents : [], eduTime)
+  const rEduS = afterReset(Array.isArray(remote.eduStudents) ? remote.eduStudents : [], eduTime)
 
   const deleted: Tombstones = {
     members: mergeTombMap(
@@ -146,6 +158,14 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     expenses: mergeTombMap(
       normalizeTombstones(local.deleted).expenses,
       normalizeTombstones(remote.deleted).expenses,
+    ),
+    eduPrograms: mergeTombMap(
+      normalizeTombstones(local.deleted).eduPrograms,
+      normalizeTombstones(remote.deleted).eduPrograms,
+    ),
+    eduStudents: mergeTombMap(
+      normalizeTombstones(local.deleted).eduStudents,
+      normalizeTombstones(remote.deleted).eduStudents,
     ),
   }
 
@@ -167,6 +187,9 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
   const expenses = sortExpenses(
     mergeRecords(lExpenses, rExpenses, expenseTime, deleted.expenses),
   )
+
+  const eduPrograms = mergeRecords(lEduP, rEduP, eduTime, deleted.eduPrograms)
+  const eduStudents = mergeRecords(lEduS, rEduS, eduTime, deleted.eduStudents)
 
   // Counters never go backwards and never reuse a number already issued.
   const usedMember = maxUsedCounter([
@@ -209,6 +232,8 @@ export function mergeAppData(local: AppData, remote: AppData): AppData {
     members,
     payments,
     expenses,
+    eduPrograms,
+    eduStudents,
     deleted,
     exportedAt: remote.exportedAt || local.exportedAt,
   }
@@ -240,6 +265,14 @@ export function restoreInto(current: AppData, backup: AppData): AppData {
       return { ...e, updatedAt: now }
     },
   )
+  const bEduP = (Array.isArray(backup.eduPrograms) ? backup.eduPrograms : []).map((r) => {
+    delete deleted.eduPrograms[r.id]
+    return { ...r, updatedAt: now }
+  })
+  const bEduS = (Array.isArray(backup.eduStudents) ? backup.eduStudents : []).map((r) => {
+    delete deleted.eduStudents[r.id]
+    return { ...r, updatedAt: now }
+  })
   const merged = mergeAppData(
     { ...current, deleted },
     {
@@ -247,6 +280,8 @@ export function restoreInto(current: AppData, backup: AppData): AppData {
       members: bMembers,
       payments: bPayments,
       expenses: bExpenses,
+      eduPrograms: bEduP,
+      eduStudents: bEduS,
       deleted,
       settings: {
         ...current.settings,
@@ -278,6 +313,10 @@ export function dataFingerprint(d: AppData): string {
     Object.keys(d.deleted?.payments || {}).sort(),
     (d.expenses || []).map((e) => [e.id, expenseTime(e), e.amountPaise]).sort(),
     Object.keys(d.deleted?.expenses || {}).sort(),
+    (d.eduPrograms || []).map((r) => [r.id, eduTime(r)]).sort(),
+    (d.eduStudents || []).map((r) => [r.id, eduTime(r)]).sort(),
+    Object.keys(d.deleted?.eduPrograms || {}).sort(),
+    Object.keys(d.deleted?.eduStudents || {}).sort(),
     s.nextMemberCounter,
     s.nextReceiptCounter,
     s.nextExpenseCounter || 1,
@@ -289,8 +328,8 @@ export function dataFingerprint(d: AppData): string {
 /** Full equality of the parts that are stored locally. */
 export function sameData(a: AppData, b: AppData): boolean {
   return (
-    JSON.stringify([a.settings, a.members, a.payments, a.expenses || [], normalizeTombstones(a.deleted)]) ===
-    JSON.stringify([b.settings, b.members, b.payments, b.expenses || [], normalizeTombstones(b.deleted)])
+    JSON.stringify([a.settings, a.members, a.payments, a.expenses || [], a.eduPrograms || [], a.eduStudents || [], normalizeTombstones(a.deleted)]) ===
+    JSON.stringify([b.settings, b.members, b.payments, b.expenses || [], b.eduPrograms || [], b.eduStudents || [], normalizeTombstones(b.deleted)])
   )
 }
 

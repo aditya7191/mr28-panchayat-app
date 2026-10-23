@@ -18,6 +18,8 @@ import {
 import {
   DEFAULT_SETTINGS,
   type AppData,
+  type EduProgram,
+  type EduStudent,
   type Expense,
   type ExpenseCategory,
   type FeePlan,
@@ -66,6 +68,8 @@ export interface ExpenseInput {
   newBills?: Record<string, string>
 }
 
+export type EduStudentInput = Omit<EduStudent, 'id' | 'createdAt' | 'updatedAt'>
+
 interface StoreCtx {
   ready: boolean
   settings: Settings
@@ -103,6 +107,13 @@ interface StoreCtx {
   addExpense: (input: ExpenseInput) => Promise<Expense>
   updateExpense: (id: string, input: ExpenseInput) => Promise<void>
   deleteExpense: (id: string) => Promise<void>
+  eduPrograms: EduProgram[]
+  eduStudents: EduStudent[]
+  saveEduProgram: (p: { id?: string; title: string; year: string }) => Promise<EduProgram>
+  deleteEduProgram: (id: string) => Promise<void>
+  /** `secret` must already be ciphertext (see utils/eduCrypto). */
+  saveEduStudent: (s: EduStudentInput & { id?: string }) => Promise<EduStudent>
+  deleteEduStudent: (id: string) => Promise<void>
   exportData: () => Promise<AppData>
   importData: (data: AppData) => Promise<void>
   clearData: () => Promise<void>
@@ -141,6 +152,10 @@ function mergeLosesLocal(local: AppData, merged: AppData): boolean {
   for (const e of local.expenses || []) {
     if (em.get(e.id) !== JSON.stringify(e)) return true
   }
+  const sm = new Map((merged.eduStudents || []).map((e) => [e.id, JSON.stringify(e)]))
+  for (const e of local.eduStudents || []) {
+    if (sm.get(e.id) !== JSON.stringify(e)) return true
+  }
   const strip = (s: Settings) => ({
     ...s,
     nextMemberCounter: 0,
@@ -173,6 +188,12 @@ function countUnsynced(local: AppData, cloud: AppData): number {
   for (const id of Object.keys(ld.members)) if (!cd.members[id]) n++
   for (const id of Object.keys(ld.payments)) if (!cd.payments[id]) n++
   for (const id of Object.keys(ld.expenses)) if (!cd.expenses[id]) n++
+  const cs = new Map((cloud.eduStudents || []).map((e) => [e.id, e.updatedAt || e.createdAt || '']))
+  for (const e of local.eduStudents || []) {
+    const t = cs.get(e.id)
+    if (t === undefined || (e.updatedAt || e.createdAt || '') > t) n++
+  }
+  for (const id of Object.keys(ld.eduStudents)) if (!cd.eduStudents[id]) n++
   return n
 }
 
@@ -183,7 +204,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [pendingBillCount, setPendingBillCount] = useState(0)
-  const [, setDeleted] = useState<Tombstones>({ members: {}, payments: {}, expenses: {} })
+  const [eduPrograms, setEduPrograms] = useState<EduProgram[]>([])
+  const [eduStudents, setEduStudents] = useState<EduStudent[]>([])
+  const [, setDeleted] = useState<Tombstones>({ members: {}, payments: {}, expenses: {}, eduPrograms: {}, eduStudents: {} })
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [syncError, setSyncError] = useState('')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
@@ -206,6 +229,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setMembers(d.members)
     setPayments(d.payments)
     setExpenses(d.expenses || [])
+    setEduPrograms(d.eduPrograms || [])
+    setEduStudents(d.eduStudents || [])
     setDeleted(normalizeTombstones(d.deleted))
     if (lastCloudRef.current) {
       setUnsyncedCount(countUnsynced(d, lastCloudRef.current))
@@ -668,6 +693,88 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   )
 
+  const saveEduProgram = useCallback(
+    async (p: { id?: string; title: string; year: string }) =>
+      mutate(p.id ? 'before-edit-edu-program' : null, (cur) => {
+        const now = new Date().toISOString()
+        const list = cur.eduPrograms || []
+        const old = p.id ? list.find((x) => x.id === p.id) : undefined
+        const rec: EduProgram = old
+          ? { ...old, title: p.title.trim(), year: p.year.trim(), updatedAt: now }
+          : { id: uid(), title: p.title.trim(), year: p.year.trim(), createdAt: now, updatedAt: now }
+        return [
+          { ...cur, eduPrograms: old ? list.map((x) => (x.id === rec.id ? rec : x)) : [...list, rec] },
+          rec,
+        ]
+      }),
+    [mutate],
+  )
+
+  const deleteEduProgram = useCallback(
+    async (id: string) => {
+      await mutate('before-delete-edu-program', (cur) => {
+        const now = new Date().toISOString()
+        const deleted = normalizeTombstones(cur.deleted)
+        deleted.eduPrograms[id] = now
+        const studs = cur.eduStudents || []
+        for (const st of studs) if (st.programId === id) deleted.eduStudents[st.id] = now
+        return [
+          {
+            ...cur,
+            deleted,
+            eduPrograms: (cur.eduPrograms || []).filter((x) => x.id !== id),
+            eduStudents: studs.filter((x) => x.programId !== id),
+          },
+          undefined,
+        ]
+      })
+    },
+    [mutate],
+  )
+
+  const saveEduStudent = useCallback(
+    async (input: EduStudentInput & { id?: string }) =>
+      mutate(input.id ? 'before-edit-edu-student' : null, (cur) => {
+        const now = new Date().toISOString()
+        const list = cur.eduStudents || []
+        const old = input.id ? list.find((x) => x.id === input.id) : undefined
+        const pct = input.resultPct === null || input.resultPct === undefined || (input.resultPct as unknown) === '' ? null : Number(input.resultPct)
+        const clean = {
+          programId: input.programId,
+          name: input.name.trim(),
+          school: input.school.trim(),
+          standard: input.standard.trim(),
+          stream: input.stream.trim(),
+          goal: input.goal.trim(),
+          resultPct: pct !== null && Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : null,
+          status: input.status.trim(),
+          secret: input.secret.startsWith('v1.') ? input.secret : '',
+        }
+        const rec: EduStudent = old
+          ? { ...old, ...clean, updatedAt: now }
+          : { id: uid(), ...clean, createdAt: now, updatedAt: now }
+        return [
+          { ...cur, eduStudents: old ? list.map((x) => (x.id === rec.id ? rec : x)) : [...list, rec] },
+          rec,
+        ]
+      }),
+    [mutate],
+  )
+
+  const deleteEduStudent = useCallback(
+    async (id: string) => {
+      await mutate('before-delete-edu-student', (cur) => {
+        const deleted = normalizeTombstones(cur.deleted)
+        deleted.eduStudents[id] = new Date().toISOString()
+        return [
+          { ...cur, deleted, eduStudents: (cur.eduStudents || []).filter((x) => x.id !== id) },
+          undefined,
+        ]
+      })
+    },
+    [mutate],
+  )
+
   const exportData = useCallback(async () => {
     const d = await withLock(() => loadAll())
     return { ...d, exportedAt: new Date().toISOString() }
@@ -704,6 +811,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       for (const m of cur.members) deleted.members[m.id] = now
       for (const p of cur.payments) deleted.payments[p.id] = now
       for (const e of cur.expenses || []) deleted.expenses[e.id] = now
+      for (const e of cur.eduPrograms || []) deleted.eduPrograms[e.id] = now
+      for (const e of cur.eduStudents || []) deleted.eduStudents[e.id] = now
       return [
         {
           ...cur,
@@ -711,6 +820,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           members: [],
           payments: [],
           expenses: [],
+          eduPrograms: [],
+          eduStudents: [],
           settings: {
             ...cur.settings,
             nextMemberCounter: 1,
@@ -738,6 +849,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       members,
       payments,
       expenses,
+      eduPrograms,
+      eduStudents,
+      saveEduProgram,
+      deleteEduProgram,
+      saveEduStudent,
+      deleteEduStudent,
       pendingBillCount,
       syncStatus,
       syncError,
@@ -768,6 +885,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     members,
     payments,
     expenses,
+    eduPrograms,
+    eduStudents,
+    saveEduProgram,
+    deleteEduProgram,
+    saveEduStudent,
+    deleteEduStudent,
     pendingBillCount,
     syncStatus,
     syncError,

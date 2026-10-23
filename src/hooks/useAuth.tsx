@@ -2,11 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
 import { useStore } from './useStore'
+import { checkAdminPassword } from '../utils/password'
+import { clearSessionKey, deriveEduKey, loadSessionKey, saveSessionKey } from '../utils/eduCrypto'
 
 const AUTH_KEY = 'mr28-admin-authed'
 
@@ -14,6 +17,10 @@ interface AuthCtx {
   isAdmin: boolean
   login: (password: string) => boolean
   logout: () => void
+  /** AES key for private education fields (derived from the password typed at login). */
+  eduKey: CryptoKey | null
+  /** Re-derive the education key from another password (e.g. data encrypted before a password change). */
+  unlockEdu: (password: string) => Promise<CryptoKey>
 }
 
 const Ctx = createContext<AuthCtx | null>(null)
@@ -29,22 +36,34 @@ function readAuthed(): boolean {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { settings } = useStore()
   const [isAdmin, setIsAdmin] = useState(readAuthed)
+  const [eduKey, setEduKey] = useState<CryptoKey | null>(null)
+
+  useEffect(() => {
+    if (isAdmin && !eduKey) void loadSessionKey().then((k) => k && setEduKey(k))
+  }, [isAdmin, eduKey])
+
+  const unlockEdu = useCallback(async (password: string) => {
+    const k = await deriveEduKey(password)
+    await saveSessionKey(k)
+    setEduKey(k)
+    return k
+  }, [])
 
   const login = useCallback(
     (password: string) => {
-      const expected = settings.adminPassword || 'aditya@1989'
-      if (password === expected) {
+      if (checkAdminPassword(password, settings.adminPassword)) {
         try {
           sessionStorage.setItem(AUTH_KEY, '1')
         } catch {
           /* ignore */
         }
         setIsAdmin(true)
+        void unlockEdu(password)
         return true
       }
       return false
     },
-    [settings.adminPassword],
+    [settings.adminPassword, unlockEdu],
   )
 
   const logout = useCallback(() => {
@@ -53,12 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    clearSessionKey()
+    setEduKey(null)
     setIsAdmin(false)
   }, [])
 
   const value = useMemo(
-    () => ({ isAdmin, login, logout }),
-    [isAdmin, login, logout],
+    () => ({ isAdmin, login, logout, eduKey, unlockEdu }),
+    [isAdmin, login, logout, eduKey, unlockEdu],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

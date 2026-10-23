@@ -8,6 +8,7 @@ const strings = {
   navPayments: { gu: 'ચુકવણી', en: 'Payments' },
   navReminders: { gu: 'રિમાઇન્ડર', en: 'Reminders' },
   navSettings: { gu: 'સેટિંગ્સ', en: 'Settings' },
+  navEducation: { gu: 'શિક્ષણ', en: 'Education' },
 
   // Dashboard
   dashboardTitle: { gu: 'ડેશબોર્ડ', en: 'Dashboard' },
@@ -209,8 +210,8 @@ const strings = {
   wrongPassword: { gu: 'ખોટો પાસવર્ડ', en: 'Wrong password' },
   changeAdminPassword: { gu: 'એડમિન પાસવર્ડ બદલો', en: 'Change admin password' },
   adminPasswordHint: {
-    gu: 'ડિફૉલ્ટ: aditya@1989 — સેટિંગ્સમાં બદલી શકાય.',
-    en: 'Default: aditya@1989 — changeable in Settings.',
+    gu: 'પાસવર્ડ સેટિંગ્સમાં બદલી શકાય. ખાલી = ડિફૉલ્ટ.',
+    en: 'Changeable in Settings. Blank = default password.',
   },
   backToGate: { gu: 'મુખ્ય પૃષ્ઠ', en: 'Home' },
   publicFees: { gu: 'ફાળો દર', en: 'Fee rates' },

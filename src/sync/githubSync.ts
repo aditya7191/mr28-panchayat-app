@@ -1,4 +1,4 @@
-import type { AppData, Settings, Tombstones } from '../types'
+import type { AppData, EduStudent, Settings, Tombstones } from '../types'
 import { normalizeTombstones } from './merge'
 import { DEFAULT_SETTINGS } from '../types'
 import {
@@ -28,6 +28,25 @@ export interface SyncResult {
   source?: 'gist' | 'repo' | 'none'
 }
 
+/** Copy only the allowed public keys of a student; `secret` must be ciphertext. */
+export function publicEduStudent(s: EduStudent): EduStudent {
+  const pct = s.resultPct === null || s.resultPct === undefined ? null : Number(s.resultPct)
+  return {
+    id: String(s.id),
+    programId: String(s.programId || ''),
+    name: String(s.name || ''),
+    school: String(s.school || ''),
+    standard: String(s.standard || ''),
+    stream: String(s.stream || ''),
+    goal: String(s.goal || ''),
+    resultPct: pct !== null && Number.isFinite(pct) ? pct : null,
+    status: String(s.status || ''),
+    secret: typeof s.secret === 'string' && s.secret.startsWith('v1.') ? s.secret : '',
+    createdAt: String(s.createdAt || ''),
+    updatedAt: String(s.updatedAt || ''),
+  }
+}
+
 /** Strip secrets before uploading to a public gist. */
 export function sanitizeForCloud(data: AppData): AppData {
   const settings: Settings = {
@@ -41,12 +60,15 @@ export function sanitizeForCloud(data: AppData): AppData {
     members: Array.isArray(data.members) ? data.members : [],
     payments: Array.isArray(data.payments) ? data.payments : [],
     expenses: Array.isArray(data.expenses) ? data.expenses : [],
+    eduPrograms: Array.isArray(data.eduPrograms) ? data.eduPrograms : [],
+    // Whitelist public fields; private data only ever travels as ciphertext in `secret`.
+    eduStudents: (Array.isArray(data.eduStudents) ? data.eduStudents : []).map(publicEduStudent),
     deleted: normalizeTombstones(data.deleted),
     exportedAt: data.exportedAt || new Date().toISOString(),
   }
 }
 
-function parseAppData(json: unknown): AppData | null {
+export function parseAppData(json: unknown): AppData | null {
   if (!json || typeof json !== 'object') return null
   const o = json as Record<string, unknown>
   if (!o.settings && !Array.isArray(o.members)) return null
@@ -59,6 +81,12 @@ function parseAppData(json: unknown): AppData | null {
       : [],
     expenses: Array.isArray(o.expenses)
       ? (o.expenses as NonNullable<AppData['expenses']>)
+      : [],
+    eduPrograms: Array.isArray(o.eduPrograms)
+      ? (o.eduPrograms as NonNullable<AppData['eduPrograms']>)
+      : [],
+    eduStudents: Array.isArray(o.eduStudents)
+      ? (o.eduStudents as NonNullable<AppData['eduStudents']>).map(publicEduStudent)
       : [],
     exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : undefined,
     deleted: normalizeTombstones(o.deleted as Tombstones | undefined),

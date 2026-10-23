@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { AppData, Expense, Member, Payment, Settings, Tombstones } from '../types'
+import type { AppData, EduProgram, EduStudent, Expense, Member, Payment, Settings, Tombstones } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 
 const DB_NAME = 'mr28-panchayat'
@@ -11,6 +11,8 @@ type KvValue =
   | Member[]
   | Payment[]
   | Expense[]
+  | EduProgram[]
+  | EduStudent[]
   | number
   | string
   | string[]
@@ -80,7 +82,17 @@ export async function loadDeleted(): Promise<Tombstones> {
     members: { ...(t?.members || {}) },
     payments: { ...(t?.payments || {}) },
     expenses: { ...(t?.expenses || {}) },
+    eduPrograms: { ...(t?.eduPrograms || {}) },
+    eduStudents: { ...(t?.eduStudents || {}) },
   }
+}
+
+export async function loadEduPrograms(): Promise<EduProgram[]> {
+  return (await get<EduProgram[]>('eduPrograms')) ?? []
+}
+
+export async function loadEduStudents(): Promise<EduStudent[]> {
+  return (await get<EduStudent[]>('eduStudents')) ?? []
 }
 
 export async function loadExpenses(): Promise<Expense[]> {
@@ -107,14 +119,16 @@ export async function setPendingBills(ids: string[]): Promise<void> {
 
 /** Read everything stored on this phone. */
 export async function loadAll(): Promise<AppData> {
-  const [settings, members, payments, expenses, deleted] = await Promise.all([
+  const [settings, members, payments, expenses, deleted, eduPrograms, eduStudents] = await Promise.all([
     loadSettings(),
     loadMembers(),
     loadPayments(),
     loadExpenses(),
     loadDeleted(),
+    loadEduPrograms(),
+    loadEduStudents(),
   ])
-  return { version: 1, settings, members, payments, expenses, deleted }
+  return { version: 1, settings, members, payments, expenses, eduPrograms, eduStudents, deleted }
 }
 
 /** Write settings + members + payments + deletion markers in ONE transaction (all or nothing). */
@@ -127,11 +141,15 @@ export async function saveAll(data: AppData): Promise<void> {
     st.put(Array.isArray(data.members) ? data.members : [], 'members'),
     st.put(Array.isArray(data.payments) ? data.payments : [], 'payments'),
     st.put(Array.isArray(data.expenses) ? data.expenses : [], 'expenses'),
+    st.put(Array.isArray(data.eduPrograms) ? data.eduPrograms : [], 'eduPrograms'),
+    st.put(Array.isArray(data.eduStudents) ? data.eduStudents : [], 'eduStudents'),
     st.put(
       {
         members: { ...(data.deleted?.members || {}) },
         payments: { ...(data.deleted?.payments || {}) },
         expenses: { ...(data.deleted?.expenses || {}) },
+        eduPrograms: { ...(data.deleted?.eduPrograms || {}) },
+        eduStudents: { ...(data.deleted?.eduStudents || {}) },
       },
       'deleted',
     ),
@@ -193,7 +211,8 @@ export async function addBackup(
   const members = Array.isArray(data.members) ? data.members : []
   const payments = Array.isArray(data.payments) ? data.payments : []
   const expenses = Array.isArray(data.expenses) ? data.expenses : []
-  if (members.length === 0 && payments.length === 0 && expenses.length === 0) return
+  const eduStudents = Array.isArray(data.eduStudents) ? data.eduStudents : []
+  if (members.length === 0 && payments.length === 0 && expenses.length === 0 && eduStudents.length === 0) return
   const list = await listBackups()
   const snap: AppData = {
     version: 1,
@@ -201,6 +220,8 @@ export async function addBackup(
     members,
     payments,
     expenses,
+    eduPrograms: Array.isArray(data.eduPrograms) ? data.eduPrograms : [],
+    eduStudents,
     deleted: data.deleted,
     exportedAt: new Date().toISOString(),
   }

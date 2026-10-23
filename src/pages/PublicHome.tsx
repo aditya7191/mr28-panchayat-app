@@ -7,6 +7,7 @@ import { StatTiles } from '../components/StatTiles'
 import { ExpenseList } from '../components/ExpenseList'
 import { HisabSummary } from '../components/HisabSummary'
 import { Watermark } from '../components/Watermark'
+import { EduBoard, EDU_SECTION_SUB, EDU_SECTION_TITLE } from '../components/EduBoard'
 import { useI18n } from '../hooks/useI18n'
 import { useStore } from '../hooks/useStore'
 import { formatDate } from '../utils/format'
@@ -27,7 +28,19 @@ function latestPaymentFor(
 
 export function PublicHome() {
   const { t, lang, toggle } = useI18n()
-  const { settings, members, payments, expenses } = useStore()
+  const { settings, members, payments, expenses, eduPrograms, eduStudents } = useStore()
+  const eduProgram = useMemo(
+    () => [...eduPrograms].sort((a, b) => b.year.localeCompare(a.year))[0],
+    [eduPrograms],
+  )
+  // Public whitelist: only name, school, standard, stream, goal (+ rank). No %, no private data.
+  const eduPublic = useMemo(
+    () =>
+      eduStudents
+        .filter((s) => s.programId === eduProgram?.id)
+        .map((s) => ({ ...s, secret: '' })),
+    [eduStudents, eduProgram],
+  )
   const [q, setQ] = useState('')
 
   const publicMembers = useMemo(() => {
@@ -135,6 +148,17 @@ export function PublicHome() {
             </div>
           </div>
         </section>
+
+        {eduProgram && eduPublic.length > 0 && (
+          <section id="education" className="rounded-2xl border border-saffron/40 bg-white p-4 shadow-sm">
+            <h3 className="border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">
+              🌟 {EDU_SECTION_TITLE}
+            </h3>
+            <p className="mb-1 pl-3 text-xs text-navy/60">{EDU_SECTION_SUB}</p>
+            <p className="mb-3 pl-3 text-[11px] font-semibold text-saffron-dark">{eduProgram.title}</p>
+            <EduBoard students={eduPublic} lang={lang} showPct={false} />
+          </section>
+        )}
 
         <section className="rounded-2xl border border-navy/10 bg-white p-4 shadow-sm">
           <h3 className="mb-3 border-l-4 border-saffron pl-2 font-display text-base font-bold text-navy">{t('publicContact')}</h3>
