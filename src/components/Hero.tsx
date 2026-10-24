@@ -12,9 +12,6 @@ export function Hero({ children }: { children?: React.ReactNode }) {
       <div className="px-5 pb-6 pt-5">
         <div className="mb-3 flex items-end justify-center gap-5">
           <BaapuPortrait />
-        <div className="mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-[#fffaf0] p-2 shadow-md ring-4 ring-[#e8b84a] gold-ring">
-          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="MR28 Panchayat logo" className="h-full w-full object-contain" />
-        </div>
         </div>
         <h2 className="font-display text-[1.7rem] font-extrabold leading-tight hero-title">
           {lang === 'gu' ? settings.orgNameGu : settings.orgNameEn}
