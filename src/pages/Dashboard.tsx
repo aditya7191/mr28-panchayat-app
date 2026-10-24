@@ -1,3 +1,4 @@
+import { BaapuPortrait } from '../components/BaapuPortrait'
 import { Link, useNavigate } from 'react-router-dom'
 import { IndianRupee, Plus, UserPlus, Users, AlertCircle } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
@@ -24,6 +25,13 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4 rounded-3xl px-4 py-3 text-white shadow-md royal-pattern">
+        <BaapuPortrait size="sm" />
+        <div className="text-left">
+          <p className="font-display text-lg font-extrabold leading-tight hero-title">મીરા રોડ સ્થાનિક પંચાયત</p>
+          <p className="text-xs font-semibold text-white/85">Mira Road Sthanik Panchayat-28</p>
+        </div>
+      </div>
       <div>
         <h2 className="border-l-4 border-saffron pl-2 font-display text-xl font-bold text-navy">{t('dashboardTitle')}</h2>
         <p className="text-xs text-navy/50">

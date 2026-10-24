@@ -1,3 +1,4 @@
+import { BaapuPortrait } from '../components/BaapuPortrait'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Eye } from 'lucide-react'
@@ -70,6 +71,7 @@ export function Gate() {
         <p className="text-center text-sm font-semibold text-navy/70">
           {t('gateWelcome')}
         </p>
+        <div className="flex justify-center"><BaapuPortrait caption={false} /></div>
         <p className="text-center text-lg font-bold text-saffron-dark">
           જય રોહિદાસ બાપુ
         </p>
